@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>File Browser</title>
+        <link rel="stylesheet" type="text/css" href="/static/style.css">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='icon.webp') }}">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1><a href="/">Files</a></h1>
+        <hr>
+        <div class="toolbar">
+            <div class="upload">
+                <form method=post enctype=multipart/form-data>
+                    <input type=file name=file>
+                    <input type=submit value=Upload>
+                </form>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul class="flash">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div class="drive">
+                <form method="post">
+                    <button name="disk" value="c">C:</button>
+                    <button name="disk" value="d">D:</button>
+                    <button name="disk" value="e">E:</button>
+                </form>
+                <form method="post">
+                    <input type="text" name="disk">
+                    <button type="submit">Go</button>
+                </form>
+            </div>
+        </div>
+        <hr>
+        <table>
+            <tr><th>Name</th><th>Size</th></tr>
+            {% for list in lists[0] %}
+            <tr>
+                <td>
+                    <a href="{{ cur_dir + list['name'] }}"><div class="dir"></div>{{ list['name'] }}</a>
+                </td>
+                <td class="size">{{ list['size'] }}</td>
+            </tr>
+            {% endfor %}
+            {% for list in lists[1] %}
+            <tr>
+                <td>
+                    <a href="{{ cur_dir + list['name'] }}"><div class="file"></div>{{ list['name'] }}</a>
+                </td>
+                <td class="size">{{ list['size'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>
