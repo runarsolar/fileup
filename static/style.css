@@ -7,27 +7,6 @@ body {
     font-family: sans-serif;
     background-color: #eee;
     padding: 10px;
-    display: block;
-}
-
-.upload {
-    padding: 10px;
-    float: left;
-}
-
-.drive {  
-    padding: 10px;
-    display: flex;
-    float: right;
-}
-
-.drive input {
-    width: 40px;
-    margin-left: 4px;
-}
-
-hr {
-    clear: both;
 }
 
 table {
@@ -40,7 +19,7 @@ table {
 table th {
     padding: 5px;
     text-align: left;
-    border: 2px solid #ddd;
+    border: 1px solid #ddd;
 }
 
 table td {
@@ -50,6 +29,10 @@ table td {
 
 table tr:hover {
     background-color: rgb(181, 207, 255);
+}
+
+.select {
+    display: none;
 }
 
 a {
@@ -77,4 +60,59 @@ a {
     width: 14px;
     background-color: gray;
 
+}
+
+.drive {
+    display: flex;
+    padding-bottom: 10px;
+}
+
+.drive input {
+    margin-left: 5px;
+    width: 40px;
+}
+
+
+
+.modal {
+    display: none;
+    z-index: 1;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    
+    overflow: auto;
+    background-color: #000;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    position: relative;
+    top: 40%;
+    max-width: 360px;
+    
+    padding: 20px 30px 10px 30px;
+    margin: auto;
+    background-color: #eee;
+    border: 1px solid black;
+    /*
+    margin: 5% auto 15% auto;
+    */
+}
+
+.modal-content input {
+    margin: 10px auto;
+    display: inline-block;
+    
+}
+
+.buttons {
+    margin: auto;
+    padding: 0 20%;
+}
+
+.modal-content button {
+    margin: 5px 10px;
 }

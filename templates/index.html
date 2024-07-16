@@ -3,59 +3,188 @@
     <head>
         <title>File Browser</title>
         <link rel="stylesheet" type="text/css" href="/static/style.css">
-        <link rel="shortcut icon" href="{{ url_for('static', filename='icon.webp') }}">
+        <link rel="icon" href="{{ url_for('static', filename='icon.webp') }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <h1><a href="/">Files</a></h1>
-        <hr>
-        <div class="toolbar">
-            <div class="upload">
-                <form method=post enctype=multipart/form-data>
-                    <input type=file name=file>
-                    <input type=submit value=Upload>
-                </form>
-                {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <ul class="flash">
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                    </ul>
-                {% endif %}
-                {% endwith %}
-            </div>
-            <div class="drive">
-                <form method="post">
-                    <button name="disk" value="c">C:</button>
-                    <button name="disk" value="d">D:</button>
-                    <button name="disk" value="e">E:</button>
-                </form>
-                <form method="post">
-                    <input type="text" name="disk">
-                    <button type="submit">Go</button>
-                </form>
-            </div>
+        <h1><a href="/">Files</a></h1> 
+        <div class="drive">
+            <form method="post">
+                <button name="disk" value="c">C:</button>
+                <button name="disk" value="d">D:</button>
+                <button name="disk" value="e">E:</button>
+            </form>
+            <form method="post">
+                <input type="text" name="disk">
+                <button type="submit">Go</button>
+            </form>
+        </div>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+        
+        <div>
+            <button onclick="document.getElementById('new').style.display='block'">New Folder</button> |
+            <button onclick="document.getElementById('upload').style.display='block'">Upload</button>
+            <button onclick="document.getElementById('rename').style.display='block';inputName();">Rename</button> |
+            <!-- <button>Move</button>
+            <button>Copy</button> -->
+
+            <button onclick="document.getElementById('del').style.display='block'">Delete</button>
+            
+            <button id="btnSelect" onclick="btnSelect()" style="float: right;">Select</button>
         </div>
         <hr>
+        <div id="upload" class="modal">
+            <form class="modal-content" method=post enctype=multipart/form-data>
+                <input type=file name=file>
+                <input type=submit value=Upload!>
+            </form>
+        </div>
+        <div id="new" class="modal">
+            <form class="modal-content" method="post">
+                <label for="foldername">Folder Name:</label>
+                <input type="text" name="foldername" required><br>
+                <div class="buttons">
+                    <button id="create" type="submit">Create</button>
+                    <button id="cancel" type="button" onclick="document.getElementById('new').style.display='none'" class="cancelbtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+        <div id="rename" class="modal">
+            <form class="modal-content" method="post">
+                <label for="newname">New name:</label>
+                <input id="newname" type="text" name="newname" required><br>
+                <div class="buttons">
+                    <button id="renameok" type="button" onclick="post('/', {op: 'rename', newname: document.getElementById('newname').value, path: '{{ cur_dir }}', dirname: getChecked(1),filename:getChecked(0)})">OK</button>
+                    <button id="cancel" type="button" onclick="document.getElementById('rename').style.display='none'" class="cancelbtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+
+        <div id="del" class="modal">
+            <form class="modal-content" method="post">
+                <p>Are you sure to Delete it?</p>
+                <button type="button" onclick="post('/', {op: 'delete', path: '{{ cur_dir }}', dirname: getChecked(1),filename:getChecked(0)})">DELETE</button>
+                <button type="button" onclick="document.getElementById('del').style.display='none'" class="cancelbtn">Cancel</button>
+            </form>
+        </div>
         <table>
-            <tr><th>Name</th><th>Size</th></tr>
+            <tr>
+                <th>Name</th>
+                <th class="select"><input type="checkbox"></th>
+                <th>Size</th>
+            </tr>
             {% for list in lists[0] %}
             <tr>
                 <td>
                     <a href="{{ cur_dir + list['name'] }}"><div class="dir"></div>{{ list['name'] }}</a>
                 </td>
+                <td class="select"><input type="checkbox" class="dirname" value="{{ list['name'] }}"></td>
                 <td class="size">{{ list['size'] }}</td>
             </tr>
             {% endfor %}
             {% for list in lists[1] %}
             <tr>
                 <td>
-                    <a href="{{ cur_dir + list['name'] }}"><div class="file"></div>{{ list['name'] }}</a>
+                    <a href="{{ cur_dir + list['name'] }}">
+                        <div class="file"></div>{{ list['name'] }}
+                    </a>
                 </td>
+                <td class="select"><input type="checkbox" class="filename" value="{{ list['name'] }}"></td>
                 <td class="size">{{ list['size'] }}</td>
+                
             </tr>
+            
             {% endfor %}
         </table>
+
+        
+        <script>
+            function btnSelect() {
+                var x = document.getElementsByClassName("select");
+                for (let i = 0; i < x.length; i++) {
+                    if (x[i].style.display === "table-cell") {
+                        x[i].style.display = "none";
+                        document.getElementById("btnSelect").innerHTML = "Select";
+                    } else {
+                        x[i].style.display = "table-cell";
+                        document.getElementById("btnSelect").innerHTML = "Cancel";
+                    }
+                }
+            }
+            var modalnew = document.getElementById('new')
+            var modalup = document.getElementById('upload')
+            var modalre = document.getElementById('rename')
+            var modaldel = document.getElementById('del')
+            window.onclick = function(event) {
+                if (event.target == modalnew) {
+                    modalnew.style.display = "none";
+                }
+                if (event.target == modalup) {
+                    modalup.style.display = "none";
+                }
+                if (event.target == modalre) {
+                    modalre.style.display = "none";
+                }
+                if (event.target == modaldel) {
+                    modaldel.style.display = "none";
+                }
+            }
+            function getChecked(dir) {
+                const form = document.createElement('form');
+                var dirname = document.querySelectorAll('input[class="dirname"]:checked'), seldir = [];
+                Array.prototype.forEach.call(dirname, function(el) {
+                    seldir.push(el.value);
+                });
+                var filename = document.querySelectorAll('input[class="filename"]:checked'), selfile = [];
+                Array.prototype.forEach.call(filename, function(el) {
+                    selfile.push(el.value);
+                });
+                if (dir) {
+                    // console.log(seldir);
+                    return seldir;
+                } else {
+                    // console.log(selfile);
+                    return selfile;
+                }
+            }
+            function post(path, params, method='post') {
+                const form = document.createElement('form');
+                form.method = method;
+                form.action = window.location;
+                
+                for (const key in params) {
+                    if (params.hasOwnProperty(key)) {
+                        const hiddenField = document.createElement('input');
+                        hiddenField.type = 'hidden';
+                        hiddenField.name = key;
+                        hiddenField.value = params[key];
+                        
+                        form.appendChild(hiddenField);
+                    }
+                }
+                document.body.appendChild(form);
+                form.submit();
+            }
+            function inputName() {
+                var firstdir = getChecked(1);
+                var firstfile = getChecked(0);
+                var name;
+                if (firstdir.length != 0) {
+                    name = firstdir[0];
+                } else {
+                    name = firstfile[0];
+                }
+                document.getElementById('newname').value = name;
+            }
+        </script>
     </body>
 </html>
