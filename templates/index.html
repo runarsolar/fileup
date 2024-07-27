@@ -10,13 +10,9 @@
         <h1><a href="/">Files</a></h1> 
         <div class="drive">
             <form method="post">
-                <button name="disk" value="c">C:</button>
-                <button name="disk" value="d">D:</button>
-                <button name="disk" value="e">E:</button>
-            </form>
-            <form method="post">
-                <input type="text" name="disk">
-                <button type="submit">Go</button>
+                {% for drive in drives %}
+                <button name="disk" value="{{ drive }}">{{ drive }}</button>
+                {% endfor %}
             </form>
         </div>
         {% with messages = get_flashed_messages() %}

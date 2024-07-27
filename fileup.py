@@ -14,6 +14,7 @@ root = 'd:/'
 def index():
     cur_dir = '/'
     global root
+    drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
     try:
         lists = show_file(root)
     except:
@@ -27,13 +28,13 @@ def index():
     if filedest:
         return redirect(request.url)
     
-    return render_template('index.html', lists=lists, cur_dir=cur_dir)
+    return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
 
 @app.route('/<path:url>', methods=['GET', 'POST'])
 def show_list(url):
     if url == 'favicon.ico':
         return redirect(url_for('static', filename='icon.webp'))
-    
+    drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
     try:
         global root
         path = os.path.join(root, url)
@@ -53,7 +54,7 @@ def show_list(url):
     if filedest:
         return redirect(request.url)
     
-    return render_template('index.html', lists=lists, cur_dir=cur_dir)
+    return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
 
 def show_file(dir):
     dirs = []
@@ -116,7 +117,7 @@ def upload():
 
 
         if 'disk' in request.form:
-            root = request.form['disk'] + ':/'
+            root = request.form['disk'] + '/'
             return redirect('/')
         
         if 'foldername' in request.form:
