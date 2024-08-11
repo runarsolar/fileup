@@ -1,57 +1,40 @@
 from flask import Flask, render_template, flash, request, send_file, redirect, url_for, abort
-from werkzeug.utils import secure_filename
 import os, shutil
-from urllib.parse import urlparse
 
-#$env:FLASK_APP="fileup.py";$env:FLASK_ENV="development";flask run -h 0.0.0.0
+#flask --app fileup --debug run -h 0.0.0.0
 
 app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
-root = 'd:/'
+root = 'd:\\'
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    cur_dir = '/'
+    
+    return redirect('/files')
+
+@app.route('/files/', methods=['GET', 'POST'])
+@app.route('/files/<path:url>', methods=['GET', 'POST'])
+def show_list(url=None):
+    #if url == 'favicon.ico':
+    #    return redirect(url_for('static', filename='icon.webp'))
     global root
     drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
-    try:
-        lists = show_file(root)
-    except:
-        root = 'd:/'
-        lists = show_file(root)
-    try:
-        filedest = upload()
-    except:
-        flash('Upload Fail')
-        return redirect('/')
-    if filedest:
-        return redirect(request.url)
     
-    return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
+    if url == None:
+        url = ''
+    path = os.path.join(root, url)
+    
+    if os.path.isdir(path):
+        lists = show_file(path)
+    else:
+        return send_file(path)
+    cur_dir = '/files/' + url
 
-@app.route('/<path:url>', methods=['GET', 'POST'])
-def show_list(url):
-    if url == 'favicon.ico':
-        return redirect(url_for('static', filename='icon.webp'))
-    drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
-    try:
-        global root
-        path = os.path.join(root, url)
-        if os.path.isdir(path):
-            lists = show_file(path)
-            cur_dir = '/' + url + '/'
-        else:
-            return send_file(path)
-    except:
+    op =  postSend(url)
+    if op == 'disk':
         return redirect('/')
-    
-    #try:
-    filedest = upload()
-    #except:
-    #    flash('Upload Fail')
-    #    return redirect('/')
-    if filedest:
+    elif op:
         return redirect(request.url)
     
     return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
@@ -77,12 +60,14 @@ def show_file(dir):
     
     return [dirs, files]
         
-def upload():
+def postSend(url):
     if request.method == 'POST':
         global root
+
+        # File Operate
         if 'op' in request.form:
             if request.form['op'] == 'delete':
-                delpath = request.form['path']
+                delpath = url
                 deldir = request.form['dirname'].split(',')
                 delfile = request.form['filename'].split(',')
                 if deldir != ['']:
@@ -94,12 +79,13 @@ def upload():
                         flash(os.path.join(root, delpath, x) + ' deleted.')
                         os.remove(os.path.join(root, delpath, x))
                 return 'delete'
+            
             elif request.form['op'] == 'rename':
                 newname = request.form['newname']
                 if newname == '':
                     flash('No name input.')
                     return redirect(request.url)
-                repath = request.form['path']
+                repath = url
                 redir = request.form['dirname'].split(',')
                 refile = request.form['filename'].split(',')
                 if (len(redir) > 1) or (len(refile) > 1 ) or ((redir != ['']) and ((refile != ['']))):
@@ -113,37 +99,35 @@ def upload():
                     os.rename(os.path.join(root, repath, refile[0]), os.path.join(root, repath, newname))
                 return 'rename'
 
-
-
-
+        # Change drives
         if 'disk' in request.form:
-            root = request.form['disk'] + '/'
-            return redirect('/')
+            root = request.form['disk'] + '\\'
+            return 'disk'
         
+        # Create new folder
         if 'foldername' in request.form:
             foldername = request.form['foldername']
-            url = urlparse(request.url).path + '/'
             folderpath = os.path.join(root, url, foldername)
             os.makedirs(folderpath)
-            return redirect(request.url)
+            return 'new'
         
-        if 'file' not in request.files:
+        # Upload one or more files
+        if 'files' not in request.files:
             flash('No file part')
             return redirect(request.url)
-        
-        file = request.files['file']
-        if file.filename == '':
+
+        files = request.files.getlist('files')
+        if (files[0].filename == ''):
             flash('No selected file')
             return redirect(request.url)
-        
-        filename = secure_filename(file.filename)
-        fileup = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        url = urlparse(request.url).path + '/'
-        filedest = os.path.join(root, url, filename)
-        file.save(fileup)
-        shutil.move(fileup, filedest)
-        return filedest
+        for file in files:
+            fileup = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(fileup)
+            filedest = os.path.join(root, url, file.filename)
+            shutil.move(fileup, filedest)
+            print(filedest)
+        return redirect(request.url)
     return
 
 def sizedisp(num):
