@@ -1,7 +1,9 @@
-from flask import Flask, render_template, flash, request, send_file, redirect, url_for, abort
-import os, shutil
+from flask import Flask, render_template, flash, request, send_file, redirect
+import os, shutil, argparse
+from urllib.parse import quote, unquote
 
 #flask --app fileup --debug run -h 0.0.0.0
+#pyinstaller -F --add-data templates:templates --add-data static:static fileup.py
 
 app = Flask(__name__)
 app.secret_key = 'dev'
@@ -16,14 +18,12 @@ def index():
 @app.route('/files/', methods=['GET', 'POST'])
 @app.route('/files/<path:url>', methods=['GET', 'POST'])
 def show_list(url=None):
-    #if url == 'favicon.ico':
-    #    return redirect(url_for('static', filename='icon.webp'))
     global root
     drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
     
     if url == None:
         url = ''
-    path = os.path.join(root, url)
+    path = os.path.join(root, unquote(url))
     
     if os.path.isdir(path):
         lists = show_file(path)
@@ -47,11 +47,13 @@ def show_file(dir):
         if os.path.isdir(path):
             info = {}
             info['name'] = filename
+            info['link'] = quote(filename)
             info['size'] = 'Folder'
             dirs.append(info)
         elif os.path.isfile(path):
             info = {}
             info['name'] = filename
+            info['link'] = quote(filename)
             size = os.stat(path).st_size
             info['size'] = sizedisp(size)
             files.append(info)
@@ -136,4 +138,16 @@ def sizedisp(num):
             return f"{num:3.1f} {unit}B"
         num /= 1024.0
     return f"{num:.1f} GB"
-    
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="down and up files")
+    parser.add_argument('-p', "--port", help="change default port")
+    args =  parser.parse_args()
+    if args.port is None:
+        port = 5000
+    else:
+        port = args.port
+    if not os.path.exists('uploads'):
+        os.mkdir('uploads')
+    app.run('0.0.0.0', port=port)

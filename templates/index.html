@@ -82,7 +82,9 @@
             {% for list in lists[0] %}
             <tr>
                 <td>
-                    <a href="{{ cur_dir + '/' + list['name'] }}"><div class="dir"></div>{{ list['name'] }}</a>
+                    <a href="{{ cur_dir + '/' + list['link'] }}">
+                        <div class="dir"></div>{{ list['name'] }}
+                    </a>
                 </td>
                 <td class="select"><input type="checkbox" class="dirname" value="{{ list['name'] }}"></td>
                 <td class="size">{{ list['size'] }}</td>
@@ -91,7 +93,7 @@
             {% for list in lists[1] %}
             <tr>
                 <td>
-                    <a href="{{ cur_dir + '/' + list['name'] }}">
+                    <a href="{{ cur_dir + '/' + list['link'] }}">
                         <div class="file"></div>{{ list['name'] }}
                     </a>
                 </td>
