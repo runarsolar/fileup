@@ -2,7 +2,7 @@ from flask import Flask, render_template, flash, request, send_file, redirect, u
 import os, shutil, hashlib, argparse
 from urllib.parse import quote, unquote
 from PIL import Image
-from multiprocessing import Pool
+from multiprocessing import Pool, freeze_support
 
 #flask --app fileup --debug run -h 0.0.0.0
 #pyinstaller -F --add-data templates:templates --add-data static:static fileup.py
@@ -206,7 +206,8 @@ def postSend(url):
 
 @app.route('/cache/<filename>')
 def show_thumb(filename):
-    return send_file('uploads/cache/' + filename)
+    path = os.getcwd() + '/uploads/cache/'
+    return send_file(path + filename)
 
 def sizedisp(num):
     for unit in ("", "k", "M"):
@@ -216,6 +217,7 @@ def sizedisp(num):
     return f"{num:.1f} GB"
 
 if __name__ == '__main__':
+    freeze_support()
     parser = argparse.ArgumentParser(description="down and up files")
     parser.add_argument('-p', "--port", help="change default port")
     args =  parser.parse_args()
