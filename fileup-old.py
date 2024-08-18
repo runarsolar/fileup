@@ -1,8 +1,6 @@
-from flask import Flask, render_template, flash, request, send_file, redirect, url_for, g
-import os, shutil, hashlib, argparse
+from flask import Flask, render_template, flash, request, send_file, redirect
+import os, shutil, argparse
 from urllib.parse import quote, unquote
-from PIL import Image
-from multiprocessing import Pool
 
 #flask --app fileup --debug run -h 0.0.0.0
 #pyinstaller -F --add-data templates:templates --add-data static:static fileup.py
@@ -10,24 +8,22 @@ from multiprocessing import Pool
 app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
-root = 'D:/'
-gridview = False
+root = 'd:/'
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return redirect(url_for('files'))
+    
+    return redirect('/files')
 
 @app.route('/files/', methods=['GET', 'POST'])
 @app.route('/files/<path:url>', methods=['GET', 'POST'])
-def files(url=''):
+def show_list(url=''):
     global root
-    g.gridview = gridview
-    g.drive = root[:2]
     drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
 
     path = os.path.join(root, unquote(url))
     if not os.path.exists(path):
-        root = 'D:'
+        root = 'd:'
         
     if url == '':
         cur_dir = '/files'
@@ -38,71 +34,14 @@ def files(url=''):
         lists = show_file(path)
     else:
         return send_file(path)
-    
-    if g.gridview:
-        #cache_thumb(lists)
-        parallel_thumb(lists)
 
     op =  postSend(url)
     if op == 'disk':
-        return redirect(url_for('files'))
+        return redirect('/')
     elif op:
         return redirect(request.url)
     
     return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
-
-def cache_thumb(lists):
-    for file in lists[1]:
-        if file['type'] in ['.jpg', '.jpeg', '.png', '.gif']:
-            file['ispic'] = True
-            pic_path = file['path']
-            if not os.path.exists("uploads/cache/t-" + file['name']):
-                im = Image.open(pic_path)
-                im.thumbnail((256, 256))
-                try:
-                    im.save("uploads/cache/t-%s" % file['name'])
-                except:
-                    rgb_im = im.convert('RGB')
-                    rgb_im.save("uploads/cache/t-%s" % file['name'])
-                file['t'] = "/cache/t-" + file['name']
-            else:
-                file['t'] = "/cache/t-" + file['name']
-        else:
-            file['ispic'] = False
-    return
-
-def parallel_thumb(lists):
-    piclist = []
-    picname = []
-    for file in lists[1]:
-        if file['type'] in ['.jpg', '.jpeg', '.png', '.gif']:
-            file['ispic'] = True
-            pic_path = file['path']
-            m = hashlib.sha256()
-            m.update(pic_path.encode())
-            tname = "t-" + file['name'] + "-" + m.hexdigest()[:6] + ".jpg"
-            if not os.path.exists("uploads/cache/" + tname):
-                piclist.append(pic_path)
-                picname.append(tname)
-                file['t'] = "/cache/" + tname
-            else:
-                file['t'] = "/cache/" + tname
-        else:
-            file['ispic'] = False
-
-    pool = Pool(8)
-    pool.map(thumbnail, zip(piclist, picname))
-    return
-
-def thumbnail(params):
-    pic_path, name = params
-    im = Image.open(pic_path)
-    im.thumbnail((256, 256))
-    try:
-        im.save("uploads/cache/%s" % name)
-    except:
-        rgb_im = im.convert('RGB')
-        rgb_im.save("uploads/cache/%s" % name)
 
 def show_file(dir):
     dirs = []
@@ -121,17 +60,15 @@ def show_file(dir):
             info['link'] = quote(filename)
             size = os.stat(path).st_size
             info['size'] = sizedisp(size)
-            info['type'] = os.path.splitext(filename)[1]
-            info['path'] = path
             files.append(info)
         else:
             print('Something is Wrong.')
+    
     return [dirs, files]
         
 def postSend(url):
     if request.method == 'POST':
         global root
-        global gridview
 
         # File Operate
         if 'op' in request.form:
@@ -141,11 +78,11 @@ def postSend(url):
                 delfile = request.form['filename'].split(',')
                 if deldir != ['']:
                     for x in deldir:
-                        flash(root + delpath + '/' + x + ' deleted.')
+                        flash(os.path.join(root, delpath, x) + ' deleted.')
                         shutil.rmtree(os.path.join(root, delpath, x))
                 if delfile != ['']:
                     for x in delfile:
-                        flash(root + delpath + '/' + x + ' deleted.')
+                        flash(os.path.join(root, delpath, x) + ' deleted.')
                         os.remove(os.path.join(root, delpath, x))
                 return 'delete'
             
@@ -161,21 +98,16 @@ def postSend(url):
                     flash('Select just One')
                     return redirect(request.url)
                 if redir != ['']:
-                    flash(root + repath + '/' + redir[0] + ' renamed.')
+                    flash(os.path.join(root, repath, redir[0]) + ' renamed.')
                     os.rename(os.path.join(root, repath, redir[0]), os.path.join(root, repath, newname))
                 if refile != ['']:
-                    flash(root + repath + '/' + refile[0] + ' renamed.')
+                    flash(os.path.join(root, repath, refile[0]) + ' renamed.')
                     os.rename(os.path.join(root, repath, refile[0]), os.path.join(root, repath, newname))
                 return 'rename'
-        
-        # Change view
-        if 'view' in request.form:
-            gridview = not gridview
-            return 'view'
 
         # Change drives
         if 'disk' in request.form:
-            root = request.form['disk'] + '/'
+            root = request.form['disk'] + '\\'
             return 'disk'
         
         # Create new folder
@@ -196,7 +128,7 @@ def postSend(url):
             return redirect(request.url)
 
         for file in files:
-            fileup = os.path.join('uploads/', file.filename)
+            fileup = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(fileup)
             filedest = os.path.join(root, url, file.filename)
             shutil.move(fileup, filedest)
@@ -204,16 +136,13 @@ def postSend(url):
         return redirect(request.url)
     return
 
-@app.route('/cache/<filename>')
-def show_thumb(filename):
-    return send_file('uploads/cache/' + filename)
-
 def sizedisp(num):
     for unit in ("", "k", "M"):
         if abs(num) < 1024.0:
             return f"{num:3.1f} {unit}B"
         num /= 1024.0
     return f"{num:.1f} GB"
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="down and up files")
@@ -225,6 +154,4 @@ if __name__ == '__main__':
         port = args.port
     if not os.path.exists('uploads'):
         os.mkdir('uploads')
-    if not os.path.exists('uploads/cache'):
-        os.mkdir('uploads/cache')
-    app.run('0.0.0.0', port=port, debug=True)
+    app.run('0.0.0.0', port=port)

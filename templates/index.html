@@ -1,112 +1,372 @@
 <!DOCTYPE html>
-<html>
+<html data-bs-theme="auto">
     <head>
-        <title>File Browser</title>
-        <link rel="stylesheet" type="text/css" href="/static/style.css">
-        <link rel="icon" href="{{ url_for('static', filename='icon.webp') }}">
+        <script src="{{ url_for('static', filename='color-modes.js') }}"></script>
+        <script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='dropzone.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='lightbox.css') }}">
+
+        <meta charset="utf-8">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" sizes="any" type="image/svg+xml">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>File Browser</title>
+        <style>
+            a {
+                color: black;
+                text-decoration: none;
+            }
+
+            [data-bs-theme=dark] a {
+                color: white;
+            }
+
+            [data-bs-theme=dark] button {
+                color: white;
+            }
+
+            .container {
+                max-width: 1000px;
+            }
+
+            .size {
+                text-align: right;
+            }
+
+            .select {
+                display: none;
+            }
+
+            .modal-content {
+                margin: auto;
+                width: 320px;
+            }
+            
+            .bd-mode-toggle .dropdown-menu .active .bi {
+                display: block !important;
+            }
+        </style>
     </head>
-    <body>
-        <h1><a href="/">Files</a></h1> 
-        <div class="drive">
-            <form method="post">
-                {% for drive in drives %}
-                <button name="disk" value="{{ drive }}">{{ drive }}</button>
-                {% endfor %}
-            </form>
+    <body class="bg-body-tertiary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+            <symbol id="check2" viewBox="0 0 16 16">
+              <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+            </symbol>
+            <symbol id="circle-half" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>
+            </symbol>
+            <symbol id="moon-stars-fill" viewBox="0 0 16 16">
+              <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+              <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"/>
+            </symbol>
+            <symbol id="sun-fill" viewBox="0 0 16 16">
+              <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+            </symbol>
+        </svg>
+
+      <div class="container">
+
+        <header class="d-flex flex-wrap py-2 align-items-center justify-content-center justify-content-sm-between">
+            <ul class="nav">
+                <li>
+                    <button class="btn btn-sm btn-outline-primary mx-2 mb-1"
+                    data-bs-toggle="modal" data-bs-target="#upload">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-up" viewBox="0 0 16 16">
+                            <path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707z"/>
+                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                        </svg>
+                        File Upload
+                    </button>
+                </li>
+                <li>
+                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
+                    data-bs-toggle="modal" data-bs-target="#new">New Folder</button>
+                </li>
+                <li>
+                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
+                    onclick="inputName()"
+                    data-bs-toggle="modal" data-bs-target="#rename">Rename</button>
+                </li>
+                <li>
+                    <button class="btn btn-sm btn-outline-secondary mb-1"
+                    data-bs-toggle="modal" data-bs-target="#del">Delete</button>
+                </li>
+            </ul>
+            <div class="nav">
+                <div class="dropdown bd-mode-toggle me-2 mb-1">
+                        <button class="btn btn-sm btn-bd-primary dropdown-toggle d-flex align-items-center"
+                                id="bd-theme"
+                                type="button"
+                                aria-expanded="false"
+                                data-bs-toggle="dropdown"
+                                aria-label="Toggle theme (auto)">
+                          <svg class="bi my-1 theme-icon-active" width="1em" height="1em"><use href="#circle-half"></use></svg>
+                          <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
+                          <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light" aria-pressed="false">
+                              <svg class="bi me-2 opacity-50" width="1em" height="1em"><use href="#sun-fill"></use></svg>
+                              Light
+                              <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+                            </button>
+                          </li>
+                          <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+                              <svg class="bi me-2 opacity-50" width="1em" height="1em"><use href="#moon-stars-fill"></use></svg>
+                              Dark
+                              <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+                            </button>
+                          </li>
+                          <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto" aria-pressed="true">
+                              <svg class="bi me-2 opacity-50" width="1em" height="1em"><use href="#circle-half"></use></svg>
+                              Auto
+                              <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+                            </button>
+                          </li>
+                        </ul>
+                </div>
+
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-1" id="btnSelect"
+                onclick="btnSelect()" style="float: right;">Select</button>
+                {% if g.gridview %}
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-1" type="button" onclick="onlyPic()">OnlyPic</button>
+                {% endif %}
+                <form method="post" class="me-2 mb-1">
+                    <button id="viewbtn" type="submit" class="btn btn-sm btn-secondary" style="float: right;"
+                    onclick="" name="view" value="change">
+                    {% if g.gridview %}Grid{% else %}List{% endif %}
+                </button>
+                </form>
+            </div>
+        </header>
+
+        <div class="operate">
+        <div id="upload" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <p class="modal-title fs-5">Upload Files</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form class="modal-body" method=post enctype=multipart/form-data>
+                        <input class="form-control mb-3" type="file" id="files" name="files" multiple>
+                        
+                        <input class="btn btn-primary w-100" type="submit" value="Upload!">
+                    </form>
+                </div>
+            </div>
         </div>
+        <div id="new" class="modal fade">
+            <div class="modal-dialog">
+                <form class="modal-content" method="post">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <p class="modal-title fs-5">Folder Name:</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input class="form-control mb-3" id="foldername" type="text" name="foldername" required>
+                        <button class="btn btn-primary w-100" id="create" type="submit">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="rename" class="modal fade">
+            <div class="modal-dialog">
+                <form class="modal-content" method="post">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <p class="modal-title fs-5">New name:</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input class="form-control mb-3" id="newname" type="text" name="newname" required>
+                        <button class="btn btn-primary w-100" id="renameok" type="button"
+                        onclick="post('/', {op: 'rename', newname: document.getElementById('newname').value, path: '{{ cur_dir }}', dirname: getChecked(1), filename: getChecked(0)})">
+                            OK
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="del" class="modal fade">
+            <div class="modal-dialog">
+                <form class="modal-content" method="post">
+                    <div class="modal-body text-center pb-0">
+                        <h5>Are you sure to Delete It?</h5>
+                        <p>The files will be deleted without recycle.</p>
+                    </div>
+                    <div class="modal-footer flex-nowrap p-0">
+                        <button class="btn btn-link text-decoration-none text-danger col-6 m-0" type="button"
+                        onclick="post('/', {op: 'delete', path: '{{ cur_dir }}', dirname: getChecked(1),filename:getChecked(0)})">
+                        <strong>DELETE</strong>
+                        </button>
+                        <button class="btn btn-link text-decoration-none col-6 m-0" type="button"
+                        data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        </div>
+
         {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <ul class=flashes>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-            </ul>
+        {% for message in messages %}
+        <div class="alert alert-info alert-dismissible fade show p-2 m-2">
+            {{ message }}
+            <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
         {% endif %}
         {% endwith %}
-        
-        <div>
-            <button onclick="document.getElementById('new').style.display='block'">New Folder</button> |
-            <button onclick="document.getElementById('upload').style.display='block'">Upload</button>
-            <button onclick="document.getElementById('rename').style.display='block';inputName();">Rename</button> |
-            <button onclick="document.getElementById('del').style.display='block'">Delete</button>
 
-            <button id="btnSelect" onclick="btnSelect()" style="float: right;">Select</button>
-        </div>
-        <hr>
-        
-        <div id="upload" class="modal">
-            <form class="modal-content" method=post enctype=multipart/form-data>
-                <input type="file" id="files" name="files" multiple>
-                <div class="progress-wrapper">
-                    <div id="progress-bar" class="progress"></div>
-                </div>
-                <input type="submit" value="Upload!">
-            </form>
-        </div>
-        <div id="new" class="modal">
-            <form class="modal-content" method="post">
-                <label for="foldername">Folder Name:</label>
-                <input type="text" name="foldername" required><br>
-                <div class="buttons">
-                    <button id="create" type="submit">Create</button>
-                    <button id="cancel" type="button" onclick="document.getElementById('new').style.display='none'" class="cancelbtn">Cancel</button>
-                </div>
-            </form>
-        </div>
-        <div id="rename" class="modal">
-            <form class="modal-content" method="post">
-                <label for="newname">New name:</label>
-                <input id="newname" type="text" name="newname" required><br>
-                <div class="buttons">
-                    <button id="renameok" type="button" onclick="post('/', {op: 'rename', newname: document.getElementById('newname').value, path: '{{ cur_dir }}', dirname: getChecked(1),filename:getChecked(0)})">OK</button>
-                    <button id="cancel" type="button" onclick="document.getElementById('rename').style.display='none'" class="cancelbtn">Cancel</button>
-                </div>
-            </form>
-        </div>
+        <form method="post">
+            <ul class="nav nav-tabs mt-2">
+                {% for drive in drives %}
+                <li class="nav-item">
+                    <button class="nav-link {% if drive==g.drive %}active{% endif %}" name="disk" value="{{ drive }}">{{ drive }}</button>
+                </li>
+                {% endfor %}
+            </ul>
+        </form>
+        <nav aria-label="breadcrumb">
+            <ol id="bread" class="breadcrumb breadcrumb-chevron bg-body-tertiary p-2 m-0">
+              <li class="breadcrumb-item">
+                <a class="link-body-emphasis" href="/files">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-door-fill" viewBox="0 0 16 16">
+                        <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5"></path>
+                    </svg>
+                    <span class="visually-hidden">Home</span>
+                </a>
+              </li>
+            </ol>
+        </nav>
 
+        {% if g.gridview %}
+        <div id="gridview" class="py-2">
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-2" style="text-align: center;">
+                {% for list in lists[0] %}
+                <div class="col notpic">
+                    <div class="card">
+                        <div class="select"><input type="checkbox" class="dirname form-check-input" value="{{ list['name'] }}" style="position: absolute;left: 4px;"></div>
+                        <button type="button" class="btn-close" style="position: absolute;right: 0;"
+                            onclick="$(this).parent().parent().fadeOut();">
+                        </button>
 
-        <div id="del" class="modal">
-            <form class="modal-content" method="post">
-                <p>Are you sure to Delete it?</p>
-                <button type="button" onclick="post('/', {op: 'delete', path: '{{ cur_dir }}', dirname: getChecked(1),filename:getChecked(0)})">DELETE</button>
-                <button type="button" onclick="document.getElementById('del').style.display='none'" class="cancelbtn">Cancel</button>
-            </form>
+                        <div class="p-3" style="height: 150px;">
+                            <svg id="foldericon" xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-folder2" viewBox="0 0 16 16">
+                                <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5z"/>
+                            </svg>
+                            <h4>{{ list['size'] }}</h4>
+                        </div>
+                        
+                        <div class="card-body m-2 p-0" style="overflow: hidden;height: 40px;">
+                            <a class="" href="{{ cur_dir + '/' + list['link'] }}">
+                                <p class="m-0" style="font-size: 14px;">{{ list['name'] }}</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% for list in lists[1] %}
+                <div class="col{% if list['ispic'] %} ispic{% else %} notpic{% endif %}">
+                    <div class="card">
+                        <div class="select"><input type="checkbox" class="filename form-check-input" value="{{ list['name'] }}" style="position: absolute;left: 4px;"></div>
+                        <button type="button" class="btn-close" style="position: absolute;right: 0;"
+                            onclick="$(this).parent().parent().fadeOut();">
+                        </button>
+
+                        {% if list['ispic'] %}
+                        <a class="clickpic" href=""><img loading="lazy" src="{{ list['t'] }}" alt="{{ list['name'] }}" width="100%" height="150px" style="object-fit: cover;"></a>
+                        {% else %}
+                        <div class="p-3" style="height: 150px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
+                                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                            </svg>
+                            <h4>{{ list['type'] }}</h4>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="card-body m-2 p-0" style="overflow: hidden;height: 40px;">
+                            <a class="" href="{{ cur_dir + '/' + list['link'] }}">
+                                <p class="m-0" style="font-size: 12px;">{{ list['name'] }}</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        <table>
+        <div class="modal lightbox-modal" id="lightbox-modal" tabindex="-1">
+            <div class="modal-dialog modal-fullscreen">
+              <div class="modal-content">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-body">
+                    <div class="container-fluid p-0">
+                        <!-- JS content here -->
+                    </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        {% else %}
+        <div id="listview">
+        <table class="table table-hover table-borderless table-sm">
             <tr>
+                <th class="select"></th>
                 <th>Name</th>
-                <th class="select"><input type="checkbox"></th>
-                <th>Size</th>
+                <th class="size">Size</th>
             </tr>
             {% for list in lists[0] %}
             <tr>
+                <td class="select"><input type="checkbox" class="dirname form-check-input" value="{{ list['name'] }}"></td>
                 <td>
-                    <a href="{{ cur_dir + '/' + list['link'] }}">
-                        <div class="dir"></div>{{ list['name'] }}
+                    <a class="" href="{{ cur_dir + '/' + list['link'] }}">
+                        <svg id="foldericon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-folder2" viewBox="0 0 16 16">
+                            <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5z"/>
+                        </svg>
+                        {{ list['name'] }}
                     </a>
                 </td>
-                <td class="select"><input type="checkbox" class="dirname" value="{{ list['name'] }}"></td>
                 <td class="size">{{ list['size'] }}</td>
             </tr>
             {% endfor %}
             {% for list in lists[1] %}
             <tr>
+                <td class="select"><input type="checkbox" class="filename form-check-input" value="{{ list['name'] }}"></td>
                 <td>
-                    <a href="{{ cur_dir + '/' + list['link'] }}">
-                        <div class="file"></div>{{ list['name'] }}
+                    <a class="" href="{{ cur_dir + '/' + list['link'] }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
+                            <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                        </svg>
+                        {{ list['name'] }}
                     </a>
                 </td>
-                <td class="select"><input type="checkbox" class="filename" value="{{ list['name'] }}"></td>
-                <td class="size">{{ list['size'] }}</td>
-                
+                <td class="size align-right">{{ list['size'] }}</td>
             </tr>
-            
             {% endfor %}
         </table>
-
+        </div>
+        {% endif %}
+        
+      </div>
         
         <script>
+            let path = location.pathname.split('/');
+            let list = document.getElementById("bread");
+            for (i = 2; i < path.length; ++i) {
+                let li = document.createElement("li");
+                if ((i + 1) === path.length) {
+                    li.classList.add("breadcrumb-item", "active");
+                    li.innerHTML = decodeURIComponent(path[i]);
+                    list.appendChild(li);
+                } else {
+                    li.classList.add("breadcrumb-item");
+                    link = path.slice(0, i+1).join('/');
+                    li.innerHTML = '<a class="link-body-emphasis fw-semibold text-decoration-none" href="'+ link +'">' + decodeURIComponent(path[i]) + '</a>';
+                    list.appendChild(li);
+                }
+            }
             function btnSelect() {
                 var x = document.getElementsByClassName("select");
                 for (let i = 0; i < x.length; i++) {
@@ -119,31 +379,13 @@
                     }
                 }
             }
-            var modalnew = document.getElementById('new')
-            var modalup = document.getElementById('upload')
-            var modalre = document.getElementById('rename')
-            var modaldel = document.getElementById('del')
-            window.onclick = function(event) {
-                if (event.target == modalnew) {
-                    modalnew.style.display = "none";
-                }
-                if (event.target == modalup) {
-                    modalup.style.display = "none";
-                }
-                if (event.target == modalre) {
-                    modalre.style.display = "none";
-                }
-                if (event.target == modaldel) {
-                    modaldel.style.display = "none";
-                }
-            }
             function getChecked(dir) {
                 const form = document.createElement('form');
-                var dirname = document.querySelectorAll('input[class="dirname"]:checked'), seldir = [];
+                var dirname = document.querySelectorAll('input[class="dirname form-check-input"]:checked'), seldir = [];
                 Array.prototype.forEach.call(dirname, function(el) {
                     seldir.push(el.value);
                 });
-                var filename = document.querySelectorAll('input[class="filename"]:checked'), selfile = [];
+                var filename = document.querySelectorAll('input[class="filename form-check-input"]:checked'), selfile = [];
                 Array.prototype.forEach.call(filename, function(el) {
                     selfile.push(el.value);
                 });
@@ -179,38 +421,90 @@
                 var name;
                 if (firstdir.length != 0) {
                     name = firstdir[0];
-                } else {
+                } else if (firstfile.length !=0) {
                     name = firstfile[0];
+                } else {
+                    name = 'no selected'
                 }
                 document.getElementById('newname').value = name;
             }
-            function postFile() {
-                var formdata = new FormData();
-                formdata.append('files', document.getElementById('files').files[0]);
-                
-                var request = new XMLHttpRequest();
-                request.upload.addEventListener('progress', function (e) {
-                    var fileSize = document.getElementById('files').files[0].size;
-                    console.log(fileSize);
-                    
-                    if (e.loaded <= fileSize) {
-                        var percent = Math.round(e.loaded / fileSize * 100);
-                        document.getElementById('progress-bar').style.width = percent + '%';
-                        document.getElementById('progress-bar').innerHTML = percent + '%';
-                    } 
-                    
-                    if(e.loaded == e.total){
-                        document.getElementById('progress-bar').style.width = '100%';
-                        document.getElementById('progress-bar').innerHTML = '100%';
+            function onlyPic() {
+                nolists = document.getElementsByClassName('notpic');
+                for (let i = 0; i < nolists.length; i++) {
+                    if (nolists[i].style.display != 'none') {
+                        nolists[i].style.display = 'none';
+                    } else {
+                        nolists[i].style.display = 'block';
                     }
-                });
-                request.upload.addEventListener('loadend', function (e) {
-                    
-                });
-                request.open('post', '{{ cur_dir }}');
-                request.timeout = 45000;
-                //request.send(formdata);
-            } 
+                }                
+            }
         </script>
+        <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='dropzone.min.js') }}"></script>
+        {% if g.gridview %}
+        <script>
+            const links = document.querySelectorAll(".clickpic");
+            const imgs = document.querySelectorAll(".ispic img");
+            const lightboxModal = document.getElementById("lightbox-modal");
+            const bsModal = new bootstrap.Modal(lightboxModal);
+            const modalBody = document.querySelector(".modal-body .container-fluid");
+            for (const link of links) {
+                link.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const currentImg = link.querySelector("img");
+                    const lightboxCarousel = document.getElementById("lightboxCarousel");
+                    if (lightboxCarousel) {
+                        const linklist = link.parentElement.parentElement.parentElement.querySelectorAll(".clickpic");
+                        const index = [...linklist].indexOf(link);
+                        const bsCarousel = new bootstrap.Carousel(lightboxCarousel);
+                        bsCarousel.to(index);
+                    } else {
+                        createCarousel(currentImg);
+                    }
+                    bsModal.show()
+                });
+            }
+            function createCarousel(img) {
+                const markup = `
+                    <div id="lightboxCarousel" class="carousel slide" data-bs-interval="false">
+                        <div class="carousel-inner">
+                            ${createSlides(img)}
+                        </div> 
+                        <button class="carousel-control-prev" type="button" data-bs-target="#lightboxCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#lightboxCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                    `;
+                modalBody.innerHTML = markup;
+            }
+            function createSlides(img) {
+                let markup = "";
+                const currentThumb = img.getAttribute("src");
+                for (const img of imgs) {
+                    const imgSrc = img.getAttribute("src");
+                    const imgAlt = img.getAttribute("alt");
+                    const imgCaption = img.getAttribute("data-caption");
+                    const currentImgSrc = img.parentElement.parentElement.querySelector(".card-body a").href;
+                    markup += `
+                        <div class="carousel-item${currentThumb === imgSrc ? " active" : ""}">
+                            <div class=""><img src=${currentImgSrc} alt=${imgAlt}>
+                            ${imgCaption ? createCaption(imgCaption) : ""}</div>
+                        </div>
+                    `;
+                }
+                return markup;
+              }
+            function createCaption(caption) {
+                return `<div class="carousel-caption">
+                    <p class="m-0">${caption}</p>
+                    </div>`;
+            }
+        </script>
+        {% endif %}
     </body>
 </html>
