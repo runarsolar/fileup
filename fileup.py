@@ -8,7 +8,7 @@ from urllib.parse import quote, unquote
 app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
-root = 'd:\\'
+root = 'd:/'
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -17,19 +17,23 @@ def index():
 
 @app.route('/files/', methods=['GET', 'POST'])
 @app.route('/files/<path:url>', methods=['GET', 'POST'])
-def show_list(url=None):
+def show_list(url=''):
     global root
     drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
-    
-    if url == None:
-        url = ''
+
     path = os.path.join(root, unquote(url))
+    if not os.path.exists(path):
+        root = 'd:'
+        
+    if url == '':
+        cur_dir = '/files'
+    else:
+        cur_dir = '/files/' + url
     
     if os.path.isdir(path):
         lists = show_file(path)
     else:
         return send_file(path)
-    cur_dir = '/files/' + url
 
     op =  postSend(url)
     if op == 'disk':
