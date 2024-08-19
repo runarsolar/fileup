@@ -12,6 +12,10 @@ app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 root = 'D:/'
 gridview = False
+if not os.path.exists('uploads'):
+    os.mkdir('uploads')
+if not os.path.exists('uploads/cache'):
+    os.mkdir('uploads/cache')
 
 @app.route('/')
 def index():
@@ -81,7 +85,7 @@ def parallel_thumb(lists):
             m = hashlib.sha256()
             m.update(pic_path.encode())
             tname = "t-" + file['name'] + "-" + m.hexdigest()[:6] + ".jpg"
-            if not os.path.exists("uploads/cache/" + tname):
+            if not os.path.exists(os.getcwd() + "/uploads/cache/" + tname):
                 piclist.append(pic_path)
                 picname.append(tname)
                 file['t'] = "/cache/" + tname
@@ -186,21 +190,17 @@ def postSend(url):
             return 'new'
         
         # Upload one or more files
-        if 'files' not in request.files:
+        if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
-
-        files = request.files.getlist('files')
-        if (files[0].filename == ''):
+        file = request.files['file']
+        if (file.filename == ''):
             flash('No selected file')
             return redirect(request.url)
-
-        for file in files:
-            fileup = os.path.join('uploads/', file.filename)
-            file.save(fileup)
-            filedest = os.path.join(root, url, file.filename)
-            shutil.move(fileup, filedest)
-            print(filedest)
+        fileup = os.path.join('uploads/', file.filename)
+        file.save(fileup)
+        filedest = os.path.join(root, url, file.filename)
+        shutil.move(fileup, filedest)
         return redirect(request.url)
     return
 
@@ -225,8 +225,5 @@ if __name__ == '__main__':
         port = 5000
     else:
         port = args.port
-    if not os.path.exists('uploads'):
-        os.mkdir('uploads')
-    if not os.path.exists('uploads/cache'):
-        os.mkdir('uploads/cache')
+    
     app.run('0.0.0.0', port=port, debug=True)

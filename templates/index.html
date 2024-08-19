@@ -5,6 +5,8 @@
         <script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='dropzone.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='glightbox.min.css') }}" />
+        <script src="{{ url_for('static', filename='glightbox.min.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='lightbox.css') }}">
 
         <meta charset="utf-8">
@@ -38,8 +40,8 @@
             }
 
             .modal-content {
+                max-width: 360px;
                 margin: auto;
-                width: 320px;
             }
             
             .bd-mode-toggle .dropdown-menu .active .bi {
@@ -61,6 +63,38 @@
             </symbol>
             <symbol id="sun-fill" viewBox="0 0 16 16">
               <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+            </symbol>
+            <symbol id="type-bin" viewBox="0 0 16 16">
+                <path d="M7.05 11.885c0 1.415-.548 2.206-1.524 2.206C4.548 14.09 4 13.3 4 11.885c0-1.412.548-2.203 1.526-2.203.976 0 1.524.79 1.524 2.203m-1.524-1.612c-.542 0-.832.563-.832 1.612q0 .133.006.252l1.559-1.143c-.126-.474-.375-.72-.733-.72zm-.732 2.508c.126.472.372.718.732.718.54 0 .83-.563.83-1.614q0-.129-.006-.25zm6.061.624V14h-3v-.595h1.181V10.5h-.05l-1.136.747v-.688l1.19-.786h.69v3.633z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+            </symbol>
+            <symbol id="type-code" viewBox="0 0 16 16">
+                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                <path d="M8.646 6.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 9 8.646 7.354a.5.5 0 0 1 0-.708m-1.292 0a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L5.707 9l1.647-1.646a.5.5 0 0 0 0-.708"/>
+            </symbol>
+            <symbol id="type-img" viewBox="0 0 16 16">
+                <path d="M6.502 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                <path d="M14 14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zM4 1a1 1 0 0 0-1 1v10l2.224-2.224a.5.5 0 0 1 .61-.075L8 11l2.157-3.02a.5.5 0 0 1 .76-.063L13 10V4.5h-2A1.5 1.5 0 0 1 9.5 3V1z"/>
+            </symbol>
+            <symbol id="type-audio" viewBox="0 0 16 16">
+                <path d="M11 6.64a1 1 0 0 0-1.243-.97l-1 .25A1 1 0 0 0 8 6.89v4.306A2.6 2.6 0 0 0 7 11c-.5 0-.974.134-1.338.377-.36.24-.662.628-.662 1.123s.301.883.662 1.123c.364.243.839.377 1.338.377s.974-.134 1.338-.377c.36-.24.662-.628.662-1.123V8.89l2-.5z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+            </symbol>
+            <symbol id="type-pdf" viewBox="0 0 16 16">
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                <path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029m1.379-1.901q-.25.115-.459.238c-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361q.016.032.026.044l.035-.012c.137-.056.355-.235.635-.572a8 8 0 0 0 .45-.606m1.64-1.33a13 13 0 0 1 1.01-.193 12 12 0 0 1-.51-.858 21 21 0 0 1-.5 1.05zm2.446.45q.226.245.435.41c.24.19.407.253.498.256a.1.1 0 0 0 .07-.015.3.3 0 0 0 .094-.125.44.44 0 0 0 .059-.2.1.1 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a4 4 0 0 0-.612-.053zM8.078 7.8a7 7 0 0 0 .2-.828q.046-.282.038-.465a.6.6 0 0 0-.032-.198.5.5 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822q.036.167.09.346z"/>
+            </symbol>
+            <symbol id="type-video" viewBox="0 0 16 16">
+                <path d="M6 6.883v4.234a.5.5 0 0 0 .757.429l3.528-2.117a.5.5 0 0 0 0-.858L6.757 6.454a.5.5 0 0 0-.757.43z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+            </symbol>
+            <symbol id="type-txt" viewBox="0 0 16 16">
+                <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
+                <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+            </symbol>
+            <symbol id="type-zip" viewBox="0 0 16 16">
+                <path d="M5 7.5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v.938l.4 1.599a1 1 0 0 1-.416 1.074l-.93.62a1 1 0 0 1-1.11 0l-.929-.62a1 1 0 0 1-.415-1.074L5 8.438zm2 0H6v.938a1 1 0 0 1-.03.243l-.4 1.598.93.62.929-.62-.4-1.598A1 1 0 0 1 7 8.438z"/>
+                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1h-2v1h-1v1h1v1h-1v1h1v1H6V5H5V4h1V3H5V2h1V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
             </symbol>
         </svg>
 
@@ -145,16 +179,21 @@
         <div class="operate">
         <div id="upload" class="modal fade">
             <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header border-bottom-0 pb-0">
-                        <p class="modal-title fs-5">Upload Files</p>
+                <div class="modal-content file-uploader">
+                    <div class="uploader-header modal-header border-bottom-0 pb-0 d-flex">
+                        <p class="uploader-title modal-title fs-5 flex-grow-1">Upload Files</p>
+                        <p class="file-completed-status m-0"></p>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="modal-body" method=post enctype=multipart/form-data>
-                        <input class="form-control mb-3" type="file" id="files" name="files" multiple>
-                        
-                        <input class="btn btn-primary w-100" type="submit" value="Upload!">
-                    </form>
+                    {% if g.gridview %}
+                    <form action="?" method=post enctype="multipart/form-data" class="dropzone m-3 rounded"></form>
+                    {% else %}
+                    <div class="modal-body">
+                        <ul class="file-list list-group"></ul>
+                        <input class="file-browse-input form-control my-2" id="fileup" type="file" name="file" multiple>
+                        <button class="btn btn-primary w-100" type="button" onclick="prepareFiles()">Upload!</button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -278,6 +317,14 @@
 
                         {% if list['ispic'] %}
                         <a class="clickpic" href=""><img loading="lazy" src="{{ list['t'] }}" alt="{{ list['name'] }}" width="100%" height="150px" style="object-fit: cover;"></a>
+                        {% elif list['type']=='.mp4' %}
+                        <a class="p-3 mp4" style="height: 150px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-file-earmark-play" viewBox="0 0 16 16">
+                                <path d="M6 6.883v4.234a.5.5 0 0 0 .757.429l3.528-2.117a.5.5 0 0 0 0-.858L6.757 6.454a.5.5 0 0 0-.757.43z"/>
+                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                            </svg>
+                            <h4>{{ list['type'] }}</h4>
+                        </a>
                         {% else %}
                         <div class="p-3" style="height: 150px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
@@ -428,14 +475,25 @@
                 }
                 document.getElementById('newname').value = name;
             }
-            function onlyPic() {
-                nolists = document.getElementsByClassName('notpic');
-                for (let i = 0; i < nolists.length; i++) {
-                    if (nolists[i].style.display != 'none') {
-                        nolists[i].style.display = 'none';
-                    } else {
-                        nolists[i].style.display = 'block';
-                    }
+            const listicon = document.querySelectorAll("#listview svg");
+            for (i=0; i<listicon.length; i++) {
+                var ext = '.' + listicon[i].parentElement.innerText.split('.').slice(-1)[0];
+                if (['.jpg','.png','.gif','.tiff','.bmp','.psd'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-img"></use>';
+                } else if (['.exe','.msi'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-bin"></use>';
+                } else if (['.py','.js','.ipynb','.java','.c','.cpp','.cs'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-code"></use>';
+                } else if (['.zip','.rar', '.7z'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-zip"></use>';
+                } else if (['.mp3','.wav','.flac','.mid'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-audio"></use>';
+                } else if (['.mp4','.mkv','.rmvb','.avi','.flv'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-video"></use>';
+                } else if (['.pdf'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-pdf"></use>';
+                } else if (['.txt','.epub','.md'].includes(ext)) {
+                    listicon[i].innerHTML = '<use href="#type-txt"></use>';
                 }                
             }
         </script>
@@ -443,6 +501,48 @@
         <script src="{{ url_for('static', filename='dropzone.min.js') }}"></script>
         {% if g.gridview %}
         <script>
+            const extlist = document.querySelectorAll("#gridview h4");
+            for (i=0; i<extlist.length; i++) {
+                var ext = extlist[i].innerHTML;
+                if (['.zip','.rar','.7z'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-zip"></use>';
+                } else if (['.exe','.msi'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-bin"></use>';
+                } else if (['.py','.js','.ipynb','.java','.c','.cpp','.cs'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-code"></use>';
+                } else if (['.tiff','.bmp', '.psd'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-img"></use>';
+                } else if (['.mp3','.wav','.flac','.mid'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-audio"></use>';
+                } else if (['.mkv','.rmvb','.avi','.flv'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-video"></use>';
+                } else if (['.pdf'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-pdf"></use>';
+                } else if (['.txt','.epub','.md'].includes(ext)) {
+                    extlist[i].parentElement.querySelector('svg').innerHTML = '<use href="#type-txt"></use>';
+                }                
+            }
+            var onlypic = localStorage.getItem('onlypic');
+            var nolists = document.getElementsByClassName('notpic');
+            if (onlypic === 'true') {
+                for (let i = 0; i < nolists.length; i++) {
+                    nolists[i].style.display = 'none';
+                }                
+            }
+            function onlyPic() {
+                nolists = document.getElementsByClassName('notpic');
+                for (let i = 0; i < nolists.length; i++) {
+                    if (nolists[i].style.display != 'none') {
+                        nolists[i].style.display = 'none';
+                        onlypic = 'true';
+                    } else {
+                        nolists[i].style.display = 'block';
+                        onlypic = 'false';
+                    }
+                    localStorage.setItem('onlypic', onlypic);
+                }
+                //location.reload();
+            }
             const links = document.querySelectorAll(".clickpic");
             const imgs = document.querySelectorAll(".ispic img");
             const lightboxModal = document.getElementById("lightbox-modal");
@@ -506,5 +606,109 @@
             }
         </script>
         {% endif %}
+        <script>
+            // Multiple File Upload with Progress Bar
+            let totalFiles = 0;
+            let completedFiles = 0;
+    
+            function prepareFiles() {
+                files = [...document.getElementById("fileup").files];
+                if(files.length === 0) return;
+                totalFiles += files.length;
+                const fileList = document.querySelector(".file-list");
+                const fileCompletedStatus = document.querySelector(".file-completed-status");
+                
+    
+                // Every Single File Progress
+                files.forEach((file, index) => {
+                    // Create uniqueId for every file
+                    const uniqueId = Date.now() + index;
+    
+                    // Generate Upload List
+                    const fileItemHTML = createFileItemHTML(file, uniqueId);
+                    fileList.insertAdjacentHTML("afterbegin", fileItemHTML);
+    
+                    // Start Upload Current File
+                    const xhr = handleFileUploading(file, uniqueId);
+    
+                    // Display Upload Status with Color
+                    const currentFileItem = document.querySelector(`#file-item-${uniqueId}`);
+                    function updateStatus(status, color) {
+                        currentFileItem.querySelector(".file-status").innerText = status;
+                        currentFileItem.querySelector(".file-status").style.color = color;
+                    }
+                    // Cancel Button
+                    const cancelButton = currentFileItem.querySelector(".cancel-button");
+                    cancelButton.addEventListener("click", function() {
+                        xhr.abort();
+                        updateStatus("Cancelled", "#e3413f");
+                        cancelButton.remove();
+                    });
+                    // Upload Completed
+                    xhr.addEventListener("readystatechange", function() {
+                        if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                            completedFiles++;
+                            cancelButton.remove();
+                            updateStatus("Completed", "#00b125");
+                            fileCompletedStatus.innerText = `${completedFiles}/${totalFiles} files completed`;                     
+                        }
+                    });
+                    // Upload Error
+                    xhr.addEventListener("error", function() {
+                        updateStatus("Error", "#e3413f");
+                    });
+                });
+                fileCompletedStatus.innerText = `${completedFiles}/${totalFiles} files completed`;
+            }
+            function handleFileUploading(file, uniqueId) {
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
+                formData.append("file", file);
+    
+                xhr.upload.addEventListener("progress", function(e) {
+                    const fileProgress = document.querySelector(`#file-item-${uniqueId} .file-progress`);
+                    const fileSize = document.querySelector(`#file-item-${uniqueId} .file-size`);
+    
+                    // Show File Progress
+                    const fsize = formattedFileSize(file.size);
+                    const progress = Math.round((e.loaded / e.total) * 100);
+                    fileProgress.style.width = `${progress}%`;
+                    fileSize.innerText = fsize;
+                });
+                xhr.open("POST", "{{ cur_dir }}", true);
+                xhr.send(formData);
+                return xhr;
+            }
+            function createFileItemHTML(file, uniqueId) {
+                const {name, size} = file;
+                const fsize = formattedFileSize(size);
+                // Generate List Item
+                return `<li id="file-item-${uniqueId}" class="list-group-item">
+                            <div class="file-content-wrapper">
+                                <div class="file-content d-flex justify-content-between">
+                                    <div class="file-detail">
+                                        <strong class="file-name">${name}</strong>
+                                        <div class="file-info">
+                                            <small class="file-size">0 MB / ${fsize}</small>
+                                            <small class="file-divider">•</small>
+                                            <small class="file-status">Uploading...</small>
+                                        </div>
+                                    </div>
+                                    <button class="cancel-button btn-close"></button>
+                                </div>
+                                <div class="file-progress-bar progress" style="height:8px;">
+                                    <div class="file-progress progress-bar"></div>
+                                </div>
+                            <div>
+                        </li>`;
+            }
+            function formattedFileSize(size) {
+                if (size >= 1024*1024) {
+                    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+                } else {
+                    return `${(size / 1024).toFixed(2)} KB`;
+                }
+            }
+            </script>
     </body>
 </html>

@@ -22,9 +22,9 @@
 }
   
 .lightbox-modal img {
-    width: auto;
-    max-height: 100vh;
-    max-width: 100%;
+    height: 100vh;
+    width: 100%;
+    object-fit: scale-down;
 }
   
 .lightbox-modal .carousel-caption {
