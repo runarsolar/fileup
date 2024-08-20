@@ -361,18 +361,6 @@
                 {% endfor %}
             </div>
         </div>
-        <div class="modal lightbox-modal" id="lightbox-modal" tabindex="-1">
-            <div class="modal-dialog modal-fullscreen">
-              <div class="modal-content">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                <div class="modal-body">
-                    <div class="container-fluid p-0">
-                        <!-- JS content here -->
-                    </div>
-                </div>
-              </div>
-            </div>
-        </div>
         {% else %}
         <div id="listview">
         <table class="table table-hover table-borderless table-sm">
@@ -564,66 +552,37 @@
                 }
                 //location.reload();
             }
-            const links = document.querySelectorAll(".clickpic");
-            const imgs = document.querySelectorAll(".ispic img");
-            const lightboxModal = document.getElementById("lightbox-modal");
-            const bsModal = new bootstrap.Modal(lightboxModal);
-            const modalBody = document.querySelector(".modal-body .container-fluid");
+            let links = document.querySelectorAll(".clickpic, .mp4");
+            if (onlypic === 'true') {
+                links = document.querySelectorAll(".clickpic");
+            }
+            let elements = [];
+            let start = 0;
+            for (i=0; i<links.length; i++) {
+                const href = links[i].parentElement.querySelector(".card-body a").href;
+                const img_info = {};
+                img_info.href = href;
+                if (links[i].className === 'clickpic') {
+                    img_info.type = 'image';
+                    elements.push(img_info);
+                } else if (onlypic==='false') {
+                    img_info.type = 'video';
+                    elements.push(img_info);
+                }
+            }
             for (const link of links) {
                 link.addEventListener("click", function (e) {
                     e.preventDefault();
-                    const currentImg = link.querySelector("img");
-                    const lightboxCarousel = document.getElementById("lightboxCarousel");
-                    if (lightboxCarousel) {
-                        const linklist = link.parentElement.parentElement.parentElement.querySelectorAll(".clickpic");
-                        const index = [...linklist].indexOf(link);
-                        const bsCarousel = new bootstrap.Carousel(lightboxCarousel);
-                        bsCarousel.to(index);
-                    } else {
-                        createCarousel(currentImg);
-                    }
-                    bsModal.show()
+                    start = [...links].indexOf(link);
+                    console.log(start);
+                    const myGallery = GLightbox({
+                        elements: elements,
+                        slideEffect: 'none',
+                        loop: true,
+                        startAt: start,
+                    });
+                    myGallery.open();
                 });
-            }
-            function createCarousel(img) {
-                const markup = `
-                    <div id="lightboxCarousel" class="carousel slide" data-bs-interval="false">
-                        <div class="carousel-inner">
-                            ${createSlides(img)}
-                        </div> 
-                        <button class="carousel-control-prev" type="button" data-bs-target="#lightboxCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#lightboxCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    </div>
-                    `;
-                modalBody.innerHTML = markup;
-            }
-            function createSlides(img) {
-                let markup = "";
-                const currentThumb = img.getAttribute("src");
-                for (const img of imgs) {
-                    const imgSrc = img.getAttribute("src");
-                    const imgAlt = img.getAttribute("alt");
-                    const imgCaption = img.getAttribute("data-caption");
-                    const currentImgSrc = img.parentElement.parentElement.querySelector(".card-body a").href;
-                    markup += `
-                        <div class="carousel-item${currentThumb === imgSrc ? " active" : ""}">
-                            <div class=""><img src=${currentImgSrc} alt=${imgAlt}>
-                            ${imgCaption ? createCaption(imgCaption) : ""}</div>
-                        </div>
-                    `;
-                }
-                return markup;
-              }
-            function createCaption(caption) {
-                return `<div class="carousel-caption">
-                    <p class="m-0">${caption}</p>
-                    </div>`;
             }
         </script>
         {% endif %}
