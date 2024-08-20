@@ -31,7 +31,8 @@ def files(url=''):
 
     path = os.path.join(root, unquote(url))
     if not os.path.exists(path):
-        root = 'D:'
+        root = os.getcwd() +'/'
+        return redirect(url_for('index'))
         
     if url == '':
         cur_dir = '/files'
@@ -79,7 +80,7 @@ def parallel_thumb(lists):
     piclist = []
     picname = []
     for file in lists[1]:
-        if file['type'] in ['.jpg', '.jpeg', '.png', '.gif']:
+        if file['type'] in ['.jpg', '.jpeg', '.png', '.bmp']:
             file['ispic'] = True
             pic_path = file['path']
             m = hashlib.sha256()
@@ -91,6 +92,8 @@ def parallel_thumb(lists):
                 file['t'] = "/cache/" + tname
             else:
                 file['t'] = "/cache/" + tname
+        elif file['type'] == '.gif':
+            file['ispic'] = True
         else:
             file['ispic'] = False
 
@@ -220,7 +223,10 @@ if __name__ == '__main__':
     freeze_support()
     parser = argparse.ArgumentParser(description="down and up files")
     parser.add_argument('-p', "--port", help="change default port")
+    parser.add_argument('-r', "--root", help="change start directory like C:/")
     args =  parser.parse_args()
+    if args.root != None:
+        root = args.root 
     if args.port is None:
         port = 5000
     else:

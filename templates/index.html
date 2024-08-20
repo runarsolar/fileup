@@ -33,15 +33,25 @@
 
             .size {
                 text-align: right;
+                text-wrap: nowrap;
             }
 
             .select {
                 display: none;
             }
 
-            .modal-content {
+            .card label {
+                padding: 4px 16px 12px 8px;
+                position: absolute;
+            }
+
+            .operate .modal-content {
                 max-width: 360px;
                 margin: auto;
+            }
+
+            .lightbox-modal button {
+                padding: 8px;
             }
             
             .bd-mode-toggle .dropdown-menu .active .bi {
@@ -51,6 +61,12 @@
     </head>
     <body class="bg-body-tertiary">
         <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+            <symbol id="folder-icon" viewBox="0 0 16 16">
+                <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5z"/>
+            </symbol>
+            <symbol id="file-icon" viewBox="0 0 16 16">
+                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+            </symbol>
             <symbol id="check2" viewBox="0 0 16 16">
               <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
             </symbol>
@@ -165,7 +181,7 @@
                 <button class="btn btn-sm btn-outline-secondary me-2 mb-1" id="btnSelect"
                 onclick="btnSelect()" style="float: right;">Select</button>
                 {% if g.gridview %}
-                <button class="btn btn-sm btn-outline-secondary me-2 mb-1" type="button" onclick="onlyPic()">OnlyPic</button>
+                <button id="onlypicbtn" class="btn btn-sm btn-outline-secondary me-2 mb-1" type="button" onclick="onlyPic()">OnlyPic</button>
                 {% endif %}
                 <form method="post" class="me-2 mb-1">
                     <button id="viewbtn" type="submit" class="btn btn-sm btn-secondary" style="float: right;"
@@ -287,14 +303,14 @@
                 {% for list in lists[0] %}
                 <div class="col notpic">
                     <div class="card">
-                        <div class="select"><input type="checkbox" class="dirname form-check-input" value="{{ list['name'] }}" style="position: absolute;left: 4px;"></div>
+                        <label class="select"><input type="checkbox" class="dirname form-check-input" value="{{ list['name'] }}"></label>
                         <button type="button" class="btn-close" style="position: absolute;right: 0;"
                             onclick="$(this).parent().parent().fadeOut();">
                         </button>
 
                         <div class="p-3" style="height: 150px;">
-                            <svg id="foldericon" xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-folder2" viewBox="0 0 16 16">
-                                <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5z"/>
+                            <svg id="foldericon" width="80" height="80" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                                <use href="#folder-icon"></use>
                             </svg>
                             <h4>{{ list['size'] }}</h4>
                         </div>
@@ -310,25 +326,26 @@
                 {% for list in lists[1] %}
                 <div class="col{% if list['ispic'] %} ispic{% else %} notpic{% endif %}">
                     <div class="card">
-                        <div class="select"><input type="checkbox" class="filename form-check-input" value="{{ list['name'] }}" style="position: absolute;left: 4px;"></div>
+                        <label class="select"><input type="checkbox" class="filename form-check-input" value="{{ list['name'] }}"></label>
                         <button type="button" class="btn-close" style="position: absolute;right: 0;"
                             onclick="$(this).parent().parent().fadeOut();">
                         </button>
-
-                        {% if list['ispic'] %}
+                        {% if list['ispic'] and list['type']!='.gif' %}
                         <a class="clickpic" href=""><img loading="lazy" src="{{ list['t'] }}" alt="{{ list['name'] }}" width="100%" height="150px" style="object-fit: cover;"></a>
+                        
+                        {% elif list['type']=='.gif' %}
+                        <a class="clickpic" href=""><img loading="lazy" src="{{ cur_dir + '/' + list['link'] }}" alt="{{ list['name'] }}" width="100%" height="150px" style="object-fit: cover;"></a>
                         {% elif list['type']=='.mp4' %}
                         <a class="p-3 mp4" style="height: 150px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-file-earmark-play" viewBox="0 0 16 16">
-                                <path d="M6 6.883v4.234a.5.5 0 0 0 .757.429l3.528-2.117a.5.5 0 0 0 0-.858L6.757 6.454a.5.5 0 0 0-.757.43z"/>
-                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                            <svg width="80" height="80" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                                <use href="#type-video"></use>
                             </svg>
                             <h4>{{ list['type'] }}</h4>
                         </a>
                         {% else %}
                         <div class="p-3" style="height: 150px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
-                                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                            <svg width="80" height="80" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                                <use href="#file-icon"></use>
                             </svg>
                             <h4>{{ list['type'] }}</h4>
                         </div>
@@ -336,7 +353,7 @@
                         
                         <div class="card-body m-2 p-0" style="overflow: hidden;height: 40px;">
                             <a class="" href="{{ cur_dir + '/' + list['link'] }}">
-                                <p class="m-0" style="font-size: 12px;">{{ list['name'] }}</p>
+                                <p class="m-0" style="font-size: 14px;">{{ list['name'] }}</p>
                             </a>
                         </div>
                     </div>
@@ -369,8 +386,8 @@
                 <td class="select"><input type="checkbox" class="dirname form-check-input" value="{{ list['name'] }}"></td>
                 <td>
                     <a class="" href="{{ cur_dir + '/' + list['link'] }}">
-                        <svg id="foldericon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-folder2" viewBox="0 0 16 16">
-                            <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5z"/>
+                        <svg id="foldericon" width="18" height="18" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                            <use href="#folder-icon"></use>
                         </svg>
                         {{ list['name'] }}
                     </a>
@@ -383,8 +400,8 @@
                 <td class="select"><input type="checkbox" class="filename form-check-input" value="{{ list['name'] }}"></td>
                 <td>
                     <a class="" href="{{ cur_dir + '/' + list['link'] }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark" viewBox="0 0 16 16">
-                            <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                        <svg width="16" height="16" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                            <use href="#file-icon"></use>
                         </svg>
                         {{ list['name'] }}
                     </a>
@@ -478,7 +495,7 @@
             const listicon = document.querySelectorAll("#listview svg");
             for (i=0; i<listicon.length; i++) {
                 var ext = '.' + listicon[i].parentElement.innerText.split('.').slice(-1)[0];
-                if (['.jpg','.png','.gif','.tiff','.bmp','.psd'].includes(ext)) {
+                if (['.jpg','.jpeg','.png','.gif','.tiff','.bmp','.psd'].includes(ext)) {
                     listicon[i].innerHTML = '<use href="#type-img"></use>';
                 } else if (['.exe','.msi'].includes(ext)) {
                     listicon[i].innerHTML = '<use href="#type-bin"></use>';
@@ -523,11 +540,13 @@
                 }                
             }
             var onlypic = localStorage.getItem('onlypic');
+            const onlypicbtn = document.getElementById('onlypicbtn');
             var nolists = document.getElementsByClassName('notpic');
             if (onlypic === 'true') {
                 for (let i = 0; i < nolists.length; i++) {
                     nolists[i].style.display = 'none';
-                }                
+                }
+                onlypicbtn.classList.add('active');
             }
             function onlyPic() {
                 nolists = document.getElementsByClassName('notpic');
@@ -535,9 +554,11 @@
                     if (nolists[i].style.display != 'none') {
                         nolists[i].style.display = 'none';
                         onlypic = 'true';
+                        document.getElementById('onlypicbtn').classList.add('active');
                     } else {
                         nolists[i].style.display = 'block';
                         onlypic = 'false';
+                        onlypicbtn.classList.remove('active');
                     }
                     localStorage.setItem('onlypic', onlypic);
                 }
@@ -686,7 +707,7 @@
                 return `<li id="file-item-${uniqueId}" class="list-group-item">
                             <div class="file-content-wrapper">
                                 <div class="file-content d-flex justify-content-between">
-                                    <div class="file-detail">
+                                    <div class="file-detail" style="overflow-wrap:anywhere;">
                                         <strong class="file-name">${name}</strong>
                                         <div class="file-info">
                                             <small class="file-size">0 MB / ${fsize}</small>
