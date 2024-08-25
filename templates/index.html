@@ -4,11 +4,12 @@
         <script src="{{ url_for('static', filename='color-modes.js') }}"></script>
         <script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+        {% if g.gridview %}
         <link rel="stylesheet" href="{{ url_for('static', filename='dropzone.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='glightbox.min.css') }}" />
         <script src="{{ url_for('static', filename='glightbox.min.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='lightbox.css') }}">
-
+        {% endif %}
         <meta charset="utf-8">
         <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" sizes="any" type="image/svg+xml">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,6 +62,10 @@
     </head>
     <body class="bg-body-tertiary">
         <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+            <symbol id="up-icon" viewBox="0 0 16 16">
+                <path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+            </symbol>
             <symbol id="folder-icon" viewBox="0 0 16 16">
                 <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5z"/>
             </symbol>
@@ -121,10 +126,7 @@
                 <li>
                     <button class="btn btn-sm btn-outline-primary mx-2 mb-1"
                     data-bs-toggle="modal" data-bs-target="#upload">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-up" viewBox="0 0 16 16">
-                            <path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707z"/>
-                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
-                        </svg>
+                        <svg width="16" height="16" fill="currentColor" class="bi" viewBox="0 0 16 16"><use href="#up-icon"></use></svg>
                         File Upload
                     </button>
                 </li>
@@ -134,8 +136,17 @@
                 </li>
                 <li>
                     <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
-                    onclick="inputName()"
-                    data-bs-toggle="modal" data-bs-target="#rename">Rename</button>
+                    onclick="preRename()">Rename</button>
+                </li>
+                <li>
+                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
+                    onclick="getList();showPath();moveModal()"
+                    data-bs-toggle="modal" data-bs-target="#move">Move</button>
+                </li>
+                <li>
+                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
+                    onclick="getList();showPath();copyModal()"
+                    data-bs-toggle="modal" data-bs-target="#move">Copy</button>
                 </li>
                 <li>
                     <button class="btn btn-sm btn-outline-secondary mb-1"
@@ -179,16 +190,19 @@
                 </div>
 
                 <button class="btn btn-sm btn-outline-secondary me-2 mb-1" id="btnSelect"
-                onclick="btnSelect()" style="float: right;">Select</button>
+                onclick="btnSelect()" style="float: right;">
+                    Select
+                </button>
+
                 {% if g.gridview %}
-                <button id="onlypicbtn" class="btn btn-sm btn-outline-secondary me-2 mb-1" type="button" onclick="onlyPic()">OnlyPic</button>
+                <button id="onlypicbtn" class="btn btn-sm btn-outline-secondary me-2 mb-1" type="button" onclick="onlyPic()">
+                    OnlyPic
+                </button>
                 {% endif %}
-                <form method="post" class="me-2 mb-1">
-                    <button id="viewbtn" type="submit" class="btn btn-sm btn-secondary" style="float: right;"
-                    onclick="" name="view" value="change">
+
+                <button type="button" class="btn btn-sm btn-secondary me-2 mb-1" style="float: right;" onclick="changeView()">
                     {% if g.gridview %}Grid{% else %}List{% endif %}
                 </button>
-                </form>
             </div>
         </header>
 
@@ -215,51 +229,81 @@
         </div>
         <div id="new" class="modal fade">
             <div class="modal-dialog">
-                <form class="modal-content" method="post">
+                <div class="modal-content">
                     <div class="modal-header border-bottom-0 pb-0">
-                        <p class="modal-title fs-5">Folder Name:</p>
+                        <p class="modal-title fs-5">Folder Name</p>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input class="form-control mb-3" id="foldername" type="text" name="foldername" required>
-                        <button class="btn btn-primary w-100" id="create" type="submit">Create</button>
+                        <input class="form-control mb-3" type="text">
+                        <button class="btn btn-primary w-100" onclick="newFolder()" type="button">Create</button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
         <div id="rename" class="modal fade">
             <div class="modal-dialog">
-                <form class="modal-content" method="post">
+                <div class="modal-content">
                     <div class="modal-header border-bottom-0 pb-0">
-                        <p class="modal-title fs-5">New name:</p>
+                        <p class="modal-title fs-5">New name</p>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input class="form-control mb-3" id="newname" type="text" name="newname" required>
-                        <button class="btn btn-primary w-100" id="renameok" type="button"
-                        onclick="post('/', {op: 'rename', newname: document.getElementById('newname').value, path: '{{ cur_dir }}', dirname: getChecked(1), filename: getChecked(0)})">
-                            OK
+                        <input class="form-control mb-3" id="newname" type="text">
+                        <button class="btn btn-primary w-100" type="button" onclick="reName()">
+                            Rename
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
         <div id="del" class="modal fade">
             <div class="modal-dialog">
-                <form class="modal-content" method="post">
+                <div class="modal-content">
                     <div class="modal-body text-center pb-0">
                         <h5>Are you sure to Delete It?</h5>
                         <p>The files will be deleted without recycle.</p>
                     </div>
                     <div class="modal-footer flex-nowrap p-0">
-                        <button class="btn btn-link text-decoration-none text-danger col-6 m-0" type="button"
-                        onclick="post('/', {op: 'delete', path: '{{ cur_dir }}', dirname: getChecked(1),filename:getChecked(0)})">
-                        <strong>DELETE</strong>
+                        <button class="btn btn-link text-decoration-none text-danger col-6 m-0" type="button" onclick="opDelete()">
+                            <strong>DELETE</strong>
                         </button>
                         <button class="btn btn-link text-decoration-none col-6 m-0" type="button"
                         data-bs-dismiss="modal">Cancel</button>
                     </div>
-                </form>
+                </div>
+            </div>
+        </div>
+        <div id="move" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content" style="height: 90vh;">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <p class="modal-title fs-5">Select the Directory to Move</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" style="overflow: auto;">
+                        <ul class="curdrive nav nav-tabs mt-2">
+                            {% for drive in drives %}
+                            <li class="nav-item">
+                                <button onclick="selectDrive(this)" class="nav-link {% if drive==g.drive %}active{% endif %}">{{ drive }}</button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <nav aria-label="breadcrumb">
+                            <ol class="selectdir breadcrumb breadcrumb-chevron bg-body-tertiary p-2 m-0"></ol>
+                        </nav>
+                        <div class="new" style="display: none;">
+                            <input class="form-control form-control-sm my-2" type="text">
+                            <button class="btn btn-sm btn-secondary" onclick="this.parentElement.style.display='None';">Cancel</button>
+                            <button class="btn btn-sm btn-primary" onclick="newDestFolder(this)">Create</button>
+                        </div>
+                        <ul class="dirlists list-group py-3"></ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="showInput()">New Folder</button>
+                        <button onclick="opMove(0)" class="btn btn-primary">Move Here</button>
+                    </div>
+                </div>
             </div>
         </div>
         </div>
@@ -275,15 +319,15 @@
         {% endif %}
         {% endwith %}
 
-        <form method="post">
-            <ul class="nav nav-tabs mt-2">
+        <div>
+            <ul id="drivename" class="nav nav-tabs mt-2">
                 {% for drive in drives %}
                 <li class="nav-item">
-                    <button class="nav-link {% if drive==g.drive %}active{% endif %}" name="disk" value="{{ drive }}">{{ drive }}</button>
+                    <button class="nav-link {% if drive==g.drive %}active{% endif %}" onclick="changeDrive(this)">{{ drive }}</button>
                 </li>
                 {% endfor %}
             </ul>
-        </form>
+        </div>
         <nav aria-label="breadcrumb">
             <ol id="bread" class="breadcrumb breadcrumb-chevron bg-body-tertiary p-2 m-0">
               <li class="breadcrumb-item">
@@ -400,10 +444,224 @@
         </table>
         </div>
         {% endif %}
-        
+
       </div>
-        
         <script>
+            var root = '{{ g.drive }}';
+            function sendJSON(url, data) {
+                var xhr = new XMLHttpRequest();
+                var url = url;
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState==4 && xhr.status===200) {
+                        var json = JSON.parse(xhr.responseText);
+                        if (json.status==='ok') {
+                            location.reload();
+                        }
+                    }
+                }
+                xhr.send(data);
+                return xhr;
+            }
+            var cur_drive = document.querySelector("#move .curdrive .active").innerText[0];
+            var cur_path = location.pathname.slice(6);
+            function selectDrive(obj) {
+                document.querySelector("#move .curdrive .active").classList.remove("active");
+                obj.classList.add("active");
+                cur_drive = obj.innerText[0];
+                cur_path = '/';
+                getList(cur_path, cur_drive);
+                showPath(cur_path, cur_drive);
+            }
+            function prevDir(obj) {
+                var index = [...obj.parentElement.parentElement.children].indexOf(obj.parentElement);
+                var prev = cur_path.split('/').slice(0, index+1).join('/');
+                getList(prev, cur_drive);
+                showPath(prev, cur_drive);
+                cur_path = prev;
+            }
+            function nextDir(obj) {
+                if (cur_path==='/') {
+                    cur_path='';
+                }
+                var next = cur_path + '/' + obj.innerText;
+                getList(next, cur_drive);
+                showPath(next, cur_drive);
+                cur_path = next;
+            }
+            function showPath(path=cur_path, drive=cur_drive) {
+                var home = `<li class="breadcrumb-item">
+                                <a onclick="prevDir(this)">${drive+':'}</a>
+                              </li>`;
+                const selectdir = document.querySelector("#move .selectdir");
+                selectdir.innerHTML = home;
+
+                var pathitem = path.split('/');
+                if (pathitem.length===1) {
+                    pathitem.push('');
+                }
+                for (i=1; i<pathitem.length; i++) {
+                    var item = `<li class="breadcrumb-item"><a onclick="prevDir(this)">${pathitem[i]}</a></li>`;
+                    selectdir.innerHTML += item;
+                }
+            }
+            function getList(path=cur_path, drive=cur_drive) {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function() {
+                    var res = JSON.parse(this.responseText);
+                    var lists = res.dirs;
+                    const dirlists = document.querySelector('#move .dirlists');
+                    dirlists.innerHTML = '';
+
+                    for (i=0; i<lists.length; i++) {
+                        let item = `<li class="list-group-item">
+                                <a onclick="nextDir(this)">${lists[i]}</a></li>`;
+                        dirlists.innerHTML += item;
+                    }
+                }
+                xhr.open("GET", `/api/lists?path=${path}&drive=${drive}`);
+                xhr.send();
+            }
+            function opMove(op) {
+                if (op===0) { op="move"; } else if (op===1) { op="copy"; }
+                var dirlist = getChecked(1);
+                var filelist = getChecked(0);
+                var from_drive = root[0];
+                var from_dir = location.pathname.slice(6);
+                var data = JSON.stringify({
+                    "op": op,
+                    "dirlist": dirlist,
+                    "filelist": filelist,
+                    "from_drive": from_drive,
+                    "from_dir": from_dir,
+                    "to_drive": cur_drive,
+                    "to_dir": cur_path
+                });
+                sendJSON("/api/operate", data);
+            }
+            function moveModal() {
+                document.querySelector("#move .modal-title").innerHTML = "Select the Directory to Move";
+                const btnMove = document.querySelector("#move .modal-footer .btn-primary");
+                btnMove.innerHTML = "Move Here";
+                btnMove.setAttribute('onclick', 'opMove(0)');                
+            }
+            function copyModal() {
+                document.querySelector("#move .modal-title").innerHTML = "Select the Directory to Copy";
+                const btnCopy = document.querySelector("#move .modal-footer .btn-primary");
+                btnCopy.innerHTML = "Copy Here";
+                btnCopy.setAttribute('onclick', 'opMove(1)');                
+            }
+            function showInput() {
+                const newFolder = document.querySelector("#move .new");
+                newFolder.style.display = 'block'
+            }
+            function newDestFolder(obj) {
+                var name = document.querySelector("#move input").value;
+                if (name==='') {
+                    alert('no input')
+                    return;
+                }
+                var data = JSON.stringify({
+                    "op": "new",
+                    "foldername": name,
+                    "to_drive": cur_drive,
+                    "to_dir": cur_path
+                });
+                sendJSON("/api/operate", data);
+                getList(cur_path, cur_drive);
+            }
+            function newFolder() {
+                var name = document.querySelector("#new input").value;
+                if (name==='') {
+                    alert('no input')
+                    return;
+                }
+                var drive = root[0];
+                var path = location.pathname.slice(6);
+                var data = JSON.stringify({
+                    "op": "new",
+                    "foldername": name,
+                    "to_drive": drive,
+                    "to_dir": path
+                });
+                sendJSON("/api/operate", data);
+            }
+            var oldname;
+            function preRename() {
+                var dirlist = getChecked(1);
+                var filelist = getChecked(0);
+                if (dirlist.length===0 && filelist.length===0) {
+                    alert('please select one');
+                    return;
+                }
+                if (dirlist.length > 1 || filelist.length > 1 || (dirlist.length===1 && filelist.length===1)) {
+                    alert('selected too more');
+                    return;
+                }
+                var name;
+                if (dirlist.length != 0) {
+                    name = dirlist[0];
+                } else if (filelist.length !=0) {
+                    name = filelist[0];
+                } else {
+                    name = 'no selected'
+                }
+                oldname = name;
+                document.getElementById('newname').value = name;
+                $('#rename').modal('show');
+            }
+            function reName() {
+                var name = document.querySelector("#rename input").value;
+                if (name==='') {
+                    alert('no input')
+                    return;
+                }
+                var drive = root[0];
+                var path = location.pathname.slice(6);
+                var data = JSON.stringify({
+                    "op": "rename",
+                    "oldname": oldname,
+                    "newname": name,
+                    "to_drive": drive,
+                    "to_dir": path
+                });
+                sendJSON("/api/operate", data);
+            }
+            function opDelete() {
+                var dirlist = getChecked(1);
+                var filelist = getChecked(0);
+                if (dirlist.length===0 && filelist.length===0) {
+                    alert('please select one');
+                    return;
+                }
+                var drive = root[0];
+                var path = location.pathname.slice(6);
+                var data = JSON.stringify({
+                    "op": "delete",
+                    "deldir": dirlist,
+                    "delfile": filelist,
+                    "to_drive": drive,
+                    "to_dir": path
+                });
+                sendJSON("/api/operate", data);
+            }
+            function changeDrive(obj) {
+                name = obj.innerText[0];
+                var data = JSON.stringify({
+                    "op": "changeDrive",
+                    "drivename": name
+                });
+                sendJSON("/api/operate", data);
+                location.href = '/files';
+            }
+            function changeView() {
+                var data = JSON.stringify({
+                    "op": "changeView"
+                });
+                sendJSON("/api/operate", data);
+            }
+
             let path = location.pathname.split('/');
             let list = document.getElementById("bread");
             for (i = 2; i < path.length; ++i) {
@@ -432,53 +690,19 @@
                 }
             }
             function getChecked(dir) {
-                const form = document.createElement('form');
                 var dirname = document.querySelectorAll('input[class="dirname form-check-input"]:checked'), seldir = [];
-                Array.prototype.forEach.call(dirname, function(el) {
-                    seldir.push(el.value);
+                Array.prototype.forEach.call(dirname, function(e) {
+                    seldir.push(e.value);
                 });
                 var filename = document.querySelectorAll('input[class="filename form-check-input"]:checked'), selfile = [];
-                Array.prototype.forEach.call(filename, function(el) {
-                    selfile.push(el.value);
+                Array.prototype.forEach.call(filename, function(e) {
+                    selfile.push(e.value);
                 });
                 if (dir) {
-                    console.log(seldir);
                     return seldir;
                 } else {
-                    console.log(selfile);
                     return selfile;
                 }
-            }
-            function post(path, params, method='post') {
-                const form = document.createElement('form');
-                form.method = method;
-                form.action = window.location;
-                
-                for (const key in params) {
-                    if (params.hasOwnProperty(key)) {
-                        const hiddenField = document.createElement('input');
-                        hiddenField.type = 'hidden';
-                        hiddenField.name = key;
-                        hiddenField.value = params[key];
-                        
-                        form.appendChild(hiddenField);
-                    }
-                }
-                document.body.appendChild(form);
-                form.submit();
-            }
-            function inputName() {
-                var firstdir = getChecked(1);
-                var firstfile = getChecked(0);
-                var name;
-                if (firstdir.length != 0) {
-                    name = firstdir[0];
-                } else if (firstfile.length !=0) {
-                    name = firstfile[0];
-                } else {
-                    name = 'no selected'
-                }
-                document.getElementById('newname').value = name;
             }
             const listicon = document.querySelectorAll("#listview svg");
             for (i=0; i<listicon.length; i++) {
@@ -503,8 +727,8 @@
             }
         </script>
         <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='dropzone.min.js') }}"></script>
         {% if g.gridview %}
+        <script src="{{ url_for('static', filename='dropzone.min.js') }}"></script>
         <script>
             const extlist = document.querySelectorAll("#gridview h4");
             for (i=0; i<extlist.length; i++) {

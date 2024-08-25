@@ -1,5 +1,5 @@
 from flask import Flask, render_template, flash, request, send_file, redirect, url_for, g
-import os, shutil, hashlib, argparse
+import os, shutil, hashlib, argparse, json
 from urllib.parse import quote, unquote
 from PIL import Image
 from multiprocessing import Pool, freeze_support
@@ -31,8 +31,9 @@ def files(url=''):
 
     path = os.path.join(root, unquote(url))
     if not os.path.exists(path):
+        return redirect(url_for('files'))
+    if not os.path.exists(path):
         root = os.getcwd() +'/'
-        return redirect(url_for('index'))
         
     if url == '':
         cur_dir = '/files'
@@ -45,36 +46,176 @@ def files(url=''):
         return send_file(path)
     
     if g.gridview:
-        #cache_thumb(lists)
         parallel_thumb(lists)
 
-    op =  postSend(url)
-    if op == 'disk':
-        return redirect(url_for('files'))
-    elif op:
-        return redirect(request.url)
+    postSend(url)
     
     return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
 
-def cache_thumb(lists):
-    for file in lists[1]:
-        if file['type'] in ['.jpg', '.jpeg', '.png', '.gif']:
-            file['ispic'] = True
-            pic_path = file['path']
-            if not os.path.exists("uploads/cache/t-" + file['name']):
-                im = Image.open(pic_path)
-                im.thumbnail((256, 256))
-                try:
-                    im.save("uploads/cache/t-%s" % file['name'])
-                except:
-                    rgb_im = im.convert('RGB')
-                    rgb_im.save("uploads/cache/t-%s" % file['name'])
-                file['t'] = "/cache/t-" + file['name']
-            else:
-                file['t'] = "/cache/t-" + file['name']
+def show_file(dir):
+    dirs = []
+    files = []
+    for filename in os.listdir(dir):
+        path = os.path.join(dir, filename)
+        if os.path.isdir(path):
+            info = {}
+            info['name'] = filename
+            info['link'] = quote(filename)
+            info['size'] = 'Folder'
+            dirs.append(info)
+        elif os.path.isfile(path):
+            info = {}
+            info['name'] = filename
+            info['link'] = quote(filename)
+            size = os.stat(path).st_size
+            info['size'] = sizedisp(size)
+            info['type'] = os.path.splitext(filename)[1]
+            info['path'] = path
+            files.append(info)
         else:
-            file['ispic'] = False
+            print('Something is Wrong.')
+    return [dirs, files]
+
+@app.route('/api/drives', methods=('POST',))
+def get_drives():
+    drive = root[:2]
+    drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
+    res = {"nowdrive": drive, "alldrives": drives}
+    return json.dumps(res)
+
+
+@app.route('/api/lists', methods=('GET','POST'))
+def get_lists():
+    path = request.args.get('path')
+    if path == None:
+        path = ''
+    drive = request.args.get('drive')
+    if drive == None:
+        dir = '/'
+    elif drive == '':
+        dir = '/'
+    elif drive == '/':
+        dir = '/' + path
+    else:
+        dir = drive + ':/' + path
+
+    dirs = []
+    files = []
+    for name in os.listdir(dir):
+        path = os.path.join(dir, name)
+        if os.path.isdir(path):
+            dirs.append(name)
+        elif os.path.isfile(path):
+            files.append(name)
+        else:
+            print('Something is Wrong.')
+    lists = {'dirs':dirs, 'files':files}
+    return json.dumps(lists, ensure_ascii=False)
+
+@app.route('/api/operate', methods=('GET','POST'))
+def operate():
+    req = request.json
+    print(req)
+    status = 'ok'
+    msg = []
+    if req['op'] == 'new':
+        to_dir = req['to_dir']
+        if to_dir == '/':
+            to_dir = ''
+        path = req['to_drive'] + ':' + to_dir + '/' + req['foldername']
+        flash('new folder created at ' + path)
+        os.mkdir(path)
+
+    if req['op'] == 'rename':
+        to_dir = req['to_dir']
+        if to_dir == '/':
+            to_dir = ''
+        path = req['to_drive'] + ':' + to_dir + '/' + req['oldname']
+        dest = req['to_drive'] + ':' + to_dir + '/' + req['newname']
+        flash(dest + ' renamed')
+        os.rename(path, dest)
+    
+    if req['op'] == 'delete':
+        to_dir = req['to_dir']
+        if to_dir == '/':
+            to_dir = ''
+        delpath = req['to_drive'] + ':' + to_dir + '/'
+        deldir = req['deldir']
+        delfile = req['delfile']
+        
+        if deldir != ['']:
+            for x in deldir:
+                flash(delpath + x + ' deleted.')
+                shutil.rmtree(delpath + x)
+        if delfile != ['']:
+            for x in delfile:
+                flash(delpath + x + ' deleted.')
+                os.remove(delpath + x)
+
+    if req['op'] == 'move':
+        dirlist = req['dirlist']
+        filelist = req['filelist']
+        from_path = req['from_drive'] +':' + req['from_dir']
+        to_path = req['to_drive'] +':' + req['to_dir']
+
+        if dirlist != ['']:
+            for dir in dirlist:
+                shutil.move(from_path + '/' + dir, to_path)
+        if filelist != ['']:
+            for file in filelist:
+                shutil.move(from_path + '/' + file, to_path)
+    
+    if req['op'] == 'copy':
+        dirlist = req['dirlist']
+        filelist = req['filelist']
+        from_path = req['from_drive'] +':' + req['from_dir']
+        to_path = req['to_drive'] +':' + req['to_dir']
+
+        if dirlist != ['']:
+            for dir in dirlist:
+                print(from_path + '/' + dir)
+                print(to_path)
+                os.mkdir(to_path + '/' + dir)
+                shutil.copytree(from_path + '/' + dir, to_path + '/' + dir, dirs_exist_ok=True)
+        if filelist != ['']:
+            for file in filelist:
+                shutil.copy(from_path + '/' + file, to_path)
+    
+    if req['op'] == 'changeDrive':
+        global root
+        root = req['drivename'] + ':/'
+
+    if req['op'] == 'changeView':
+        global gridview
+        gridview = not gridview
+    
+    res = {'status': status, 'msg': msg}
+    return json.dumps(res)
+
+
+def postSend(url):
+    if request.method == 'POST':
+        global root
+        
+        # Upload one or more files
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        if (file.filename == ''):
+            flash('No selected file')
+            return redirect(request.url)
+        fileup = os.path.join('uploads/', file.filename)
+        file.save(fileup)
+        filedest = os.path.join(root, url, file.filename)
+        shutil.move(fileup, filedest)
+        return redirect(request.url)
     return
+
+@app.route('/cache/<filename>')
+def show_thumb(filename):
+    path = os.getcwd() + '/uploads/cache/'
+    return send_file(path + filename)
 
 def parallel_thumb(lists):
     piclist = []
@@ -110,107 +251,6 @@ def thumbnail(params):
     except:
         rgb_im = im.convert('RGB')
         rgb_im.save("uploads/cache/%s" % name)
-
-def show_file(dir):
-    dirs = []
-    files = []
-    for filename in os.listdir(dir):
-        path = os.path.join(dir, filename)
-        if os.path.isdir(path):
-            info = {}
-            info['name'] = filename
-            info['link'] = quote(filename)
-            info['size'] = 'Folder'
-            dirs.append(info)
-        elif os.path.isfile(path):
-            info = {}
-            info['name'] = filename
-            info['link'] = quote(filename)
-            size = os.stat(path).st_size
-            info['size'] = sizedisp(size)
-            info['type'] = os.path.splitext(filename)[1]
-            info['path'] = path
-            files.append(info)
-        else:
-            print('Something is Wrong.')
-    return [dirs, files]
-        
-def postSend(url):
-    if request.method == 'POST':
-        global root
-        global gridview
-
-        # File Operate
-        if 'op' in request.form:
-            if request.form['op'] == 'delete':
-                delpath = url
-                deldir = request.form['dirname'].split(',')
-                delfile = request.form['filename'].split(',')
-                if deldir != ['']:
-                    for x in deldir:
-                        flash(root + delpath + '/' + x + ' deleted.')
-                        shutil.rmtree(os.path.join(root, delpath, x))
-                if delfile != ['']:
-                    for x in delfile:
-                        flash(root + delpath + '/' + x + ' deleted.')
-                        os.remove(os.path.join(root, delpath, x))
-                return 'delete'
-            
-            elif request.form['op'] == 'rename':
-                newname = request.form['newname']
-                if newname == '':
-                    flash('No name input.')
-                    return redirect(request.url)
-                repath = url
-                redir = request.form['dirname'].split(',')
-                refile = request.form['filename'].split(',')
-                if (len(redir) > 1) or (len(refile) > 1 ) or ((redir != ['']) and ((refile != ['']))):
-                    flash('Select just One')
-                    return redirect(request.url)
-                if redir != ['']:
-                    flash(root + repath + '/' + redir[0] + ' renamed.')
-                    os.rename(os.path.join(root, repath, redir[0]), os.path.join(root, repath, newname))
-                if refile != ['']:
-                    flash(root + repath + '/' + refile[0] + ' renamed.')
-                    os.rename(os.path.join(root, repath, refile[0]), os.path.join(root, repath, newname))
-                return 'rename'
-        
-        # Change view
-        if 'view' in request.form:
-            gridview = not gridview
-            return 'view'
-
-        # Change drives
-        if 'disk' in request.form:
-            root = request.form['disk'] + '/'
-            return 'disk'
-        
-        # Create new folder
-        if 'foldername' in request.form:
-            foldername = request.form['foldername']
-            folderpath = os.path.join(root, url, foldername)
-            os.makedirs(folderpath)
-            return 'new'
-        
-        # Upload one or more files
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        if (file.filename == ''):
-            flash('No selected file')
-            return redirect(request.url)
-        fileup = os.path.join('uploads/', file.filename)
-        file.save(fileup)
-        filedest = os.path.join(root, url, file.filename)
-        shutil.move(fileup, filedest)
-        return redirect(request.url)
-    return
-
-@app.route('/cache/<filename>')
-def show_thumb(filename):
-    path = os.getcwd() + '/uploads/cache/'
-    return send_file(path + filename)
 
 def sizedisp(num):
     for unit in ("", "k", "M"):
