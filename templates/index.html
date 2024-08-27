@@ -5,7 +5,6 @@
         <script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
         {% if g.gridview %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='dropzone.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='glightbox.min.css') }}" />
         <script src="{{ url_for('static', filename='glightbox.min.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='lightbox.css') }}">
@@ -38,6 +37,10 @@
             }
 
             .select {
+                display: none;
+            }
+
+            .afterselect {
                 display: none;
             }
 
@@ -121,7 +124,7 @@
 
       <div class="container">
 
-        <header class="d-flex flex-wrap py-2 align-items-center justify-content-center justify-content-sm-between">
+        <header class="d-flex flex-wrap pt-2 align-items-center justify-content-center justify-content-sm-between">
             <ul class="nav">
                 <li>
                     <button class="btn btn-sm btn-outline-primary mx-2 mb-1"
@@ -132,26 +135,9 @@
                 </li>
                 <li>
                     <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
-                    data-bs-toggle="modal" data-bs-target="#new">New Folder</button>
+                    data-bs-toggle="modal" data-bs-target="#new">New</button>
                 </li>
-                <li>
-                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
-                    onclick="preRename()">Rename</button>
-                </li>
-                <li>
-                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
-                    onclick="getList();showPath();moveModal()"
-                    data-bs-toggle="modal" data-bs-target="#move">Move</button>
-                </li>
-                <li>
-                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
-                    onclick="getList();showPath();copyModal()"
-                    data-bs-toggle="modal" data-bs-target="#move">Copy</button>
-                </li>
-                <li>
-                    <button class="btn btn-sm btn-outline-secondary mb-1"
-                    data-bs-toggle="modal" data-bs-target="#del">Delete</button>
-                </li>
+                
             </ul>
             <div class="nav">
                 <div class="dropdown bd-mode-toggle me-2 mb-1">
@@ -205,6 +191,34 @@
                 </button>
             </div>
         </header>
+        <ul class="nav">
+            <li>
+                <button class="btn btn-sm btn-outline-dark mx-2 mb-1 afterselect"
+                onclick="openTxt()">OpenTxt</button>
+            </li>
+            <li>
+                <button id="zipfile" class="btn btn-sm btn-outline-dark me-2 mb-1 afterselect"
+                onclick="zipFile()">Zip</button>
+            </li>
+            <li>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-1 afterselect"
+                onclick="preRename()">Rename</button>
+            </li>
+            <li>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-1 afterselect"
+                onclick="getList();showPath();moveModal()"
+                data-bs-toggle="modal" data-bs-target="#move">Move</button>
+            </li>
+            <li>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-1 afterselect"
+                onclick="getList();showPath();copyModal()"
+                data-bs-toggle="modal" data-bs-target="#move">Copy</button>
+            </li>
+            <li>
+                <button class="btn btn-sm btn-outline-secondary mb-1 afterselect"
+                data-bs-toggle="modal" data-bs-target="#del">Delete</button>
+            </li>
+        </ul>
 
         <div class="operate">
         <div id="upload" class="modal fade">
@@ -213,17 +227,13 @@
                     <div class="uploader-header modal-header border-bottom-0 pb-0 d-flex">
                         <p class="uploader-title modal-title fs-5 flex-grow-1">Upload Files</p>
                         <p class="file-completed-status m-0"></p>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    {% if g.gridview %}
-                    <form action="?" method=post enctype="multipart/form-data" class="dropzone m-3 rounded"></form>
-                    {% else %}
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="location.reload()"></button>
+                    </div>    
                     <div class="modal-body">
                         <ul class="file-list list-group"></ul>
                         <input class="file-browse-input form-control my-2" id="fileup" type="file" name="file" multiple>
                         <button class="btn btn-primary w-100" type="button" onclick="prepareFiles()">Upload!</button>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -231,12 +241,13 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header border-bottom-0 pb-0">
-                        <p class="modal-title fs-5">Folder Name</p>
+                        <p class="modal-title fs-5">Name</p>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input class="form-control mb-3" type="text">
-                        <button class="btn btn-primary w-100" onclick="newFolder()" type="button">Create</button>
+                        <button class="btn btn-primary" onclick="newFolder(0)" type="button">New File</button>
+                        <button class="btn btn-primary" onclick="newFolder(1)" type="button">New Folder</button>
                     </div>
                 </div>
             </div>
@@ -302,6 +313,20 @@
                     <div class="modal-footer">
                         <button class="btn btn-secondary" onclick="showInput()">New Folder</button>
                         <button onclick="opMove(0)" class="btn btn-primary">Move Here</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="edit" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <p class="modal-title fs-5">Text Editor</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea class="form-control" style="height: 60vh;"></textarea>
+                        <button class="btn btn-primary mt-2" onclick="saveTxt(this)">Save</button>
                     </div>
                 </div>
             </div>
@@ -409,7 +434,7 @@
         <div id="listview">
         <table class="table table-hover table-borderless table-sm">
             <tr>
-                <th class="select"></th>
+                <th class="select"><input type="checkbox" class="form-check-input" id="selectall"></th>
                 <th>Name</th>
                 <th class="size">Size</th>
             </tr>
@@ -456,10 +481,12 @@
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState==4 && xhr.status===200) {
                         var json = JSON.parse(xhr.responseText);
-                        if (json.status==='ok') {
+                        console.log(json);
+                        if (json.redirect==='page') {
                             location.reload();
                         }
                     }
+                    return xhr.responseText;
                 }
                 xhr.send(data);
                 return xhr;
@@ -527,6 +554,10 @@
                 if (op===0) { op="move"; } else if (op===1) { op="copy"; }
                 var dirlist = getChecked(1);
                 var filelist = getChecked(0);
+                if (dirlist.length===0 && filelist.length===0) {
+                    alert('please select one');
+                    return;
+                }
                 var from_drive = root[0];
                 var from_dir = location.pathname.slice(6);
                 var data = JSON.stringify({
@@ -566,12 +597,19 @@
                     "op": "new",
                     "foldername": name,
                     "to_drive": cur_drive,
-                    "to_dir": cur_path
+                    "to_dir": cur_path,
+                    "redirect": "no"
                 });
                 sendJSON("/api/operate", data);
                 getList(cur_path, cur_drive);
             }
-            function newFolder() {
+            function newFolder(folder) {
+                var op;
+                if (folder===1) {
+                    op = "newfolder";
+                } else if (folder===0) {
+                    op = "newfile";
+                }
                 var name = document.querySelector("#new input").value;
                 if (name==='') {
                     alert('no input')
@@ -580,10 +618,11 @@
                 var drive = root[0];
                 var path = location.pathname.slice(6);
                 var data = JSON.stringify({
-                    "op": "new",
-                    "foldername": name,
+                    "op": op,
+                    "name": name,
                     "to_drive": drive,
-                    "to_dir": path
+                    "to_dir": path,
+                    "redirect": "page"
                 });
                 sendJSON("/api/operate", data);
             }
@@ -648,12 +687,15 @@
             }
             function changeDrive(obj) {
                 name = obj.innerText[0];
+                if (name===root[0]) {
+                    location.href = '/';
+                    return
+                }
                 var data = JSON.stringify({
                     "op": "changeDrive",
                     "drivename": name
                 });
                 sendJSON("/api/operate", data);
-                location.href = '/files';
             }
             function changeView() {
                 var data = JSON.stringify({
@@ -661,7 +703,117 @@
                 });
                 sendJSON("/api/operate", data);
             }
-
+            function zipFile() {
+                var dirlist = getChecked(1);
+                var filelist = getChecked(0);
+                var ext;
+                if (filelist.length!=0) {
+                    ext = filelist[0].split('.').slice(-1)[0];
+                }
+                if (dirlist.length===1 && filelist.length===0) {
+                    var drive = root[0];
+                    var path = location.pathname.slice(6);
+                    var data = JSON.stringify({
+                        "op": "archive",
+                        "dirname": dirlist[0],
+                        "to_drive": drive,
+                        "to_dir": path
+                    });
+                    sendJSON("/api/operate", data);
+                } else if (dirlist.length===0 && filelist.length===1 && ext==="zip") {
+                    var drive = root[0];
+                    var path = location.pathname.slice(6);
+                    var data = JSON.stringify({
+                        "op": "unzip",
+                        "zipfile": filelist[0],
+                        "to_drive": drive,
+                        "to_dir": path
+                    });
+                    sendJSON("/api/operate", data);
+                } else if (dirlist.length===0 && filelist.length!=0) {
+                    var drive = root[0];
+                    var path = location.pathname.slice(6);
+                    var data = JSON.stringify({
+                        "op": "zip",
+                        "filelist": filelist,
+                        "to_drive": drive,
+                        "to_dir": path
+                    });
+                    sendJSON("/api/operate", data);
+                } else {
+                    alert('you can put them into one folder');
+                }
+            }
+            const checkboxs = document.querySelectorAll("input[type=checkbox]");
+            checkboxs.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    var dirlist = getChecked(1);
+                    var filelist = getChecked(0);
+                    var ext;
+                    if (filelist.length!=0) {
+                        ext = filelist[0].split('.').slice(-1)[0];
+                    }
+                    if (dirlist.length===0 && filelist.length===1 && ext==="zip") {
+                        
+                        document.getElementById("zipfile").innerHTML = "Unzip";
+                    } else {
+                        document.getElementById("zipfile").innerHTML = "Zip";
+                    }
+                });
+            });
+            var filepath;
+            function openTxt() {
+                var filelist = getChecked(0);
+                if (filelist.length===0) {
+                    alert('please select one');
+                    return;
+                }
+                if (filelist.length > 1) {
+                    alert('selected too more');
+                    return;
+                }
+                var name = filelist[0];
+                var ext = '.' + name.split('.').slice(-1);
+                if (!['.txt','.py'].includes(ext)) {
+                    alert('not support file type');
+                    return;
+                }
+                var drive = root[0];
+                var path = location.pathname.slice(6);
+                filepath = drive + ':' + path + '/' + name;
+                var data = JSON.stringify({
+                    "op": "open",
+                    "name": name,
+                    "to_drive": drive,
+                    "to_dir": path
+                });
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/api/openfile", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onload = function() {
+                    res = JSON.parse(xhr.responseText);
+                    const editbox = document.querySelector("#edit textarea");
+                    editbox.innerHTML = res.txt;
+                    $('#edit').modal('show');
+                }
+                xhr.send(data);
+            }
+            function saveTxt(obj) {
+                const editbox = document.querySelector("#edit textarea");
+                var txt = editbox.value;
+                data = JSON.stringify({
+                    "op": "save",
+                    "path": filepath,
+                    "txt":txt
+                });
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/api/openfile", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onload = function() {
+                    console.log(xhr.responseText);
+                }
+                xhr.send(data);
+            }
             let path = location.pathname.split('/');
             let list = document.getElementById("bread");
             for (i = 2; i < path.length; ++i) {
@@ -677,18 +829,51 @@
                     list.appendChild(li);
                 }
             }
+            var selectmode = false;
             function btnSelect() {
-                var x = document.getElementsByClassName("select");
-                for (let i = 0; i < x.length; i++) {
-                    if (x[i].style.display === "table-cell") {
-                        x[i].style.display = "none";
-                        document.getElementById("btnSelect").innerHTML = "Select";
+                selectmode = !selectmode;
+                const btnSel = document.getElementById("btnSelect");
+                if (selectmode===true) {
+                    btnSel.innerHTML = "Cancel";
+                } else {
+                    btnSel.innerHTML = "Select"
+                }
+                var a = document.getElementsByClassName("afterselect");
+                for (var i = 0; i<a.length; i++) {
+                    if (selectmode===true) {
+                        a[i].style.display = "block";
                     } else {
-                        x[i].style.display = "table-cell";
-                        document.getElementById("btnSelect").innerHTML = "Cancel";
+                        a[i].style.display = "none";
                     }
                 }
+                var x = document.getElementsByClassName("select");
+                for (let i = 0; i < x.length; i++) {
+                    if (selectmode===true) {
+                        x[i].style.display = "table-cell";                        
+                    } else {                        
+                        x[i].style.display = "none";
+                    }
+                }
+                var dirlist = getChecked(1);
+                var filelist = getChecked(0);
+                if (filelist.length!=0) {
+                    ext = filelist[0].split('.').slice(-1);
+                }
+                if (dirlist.length===0 && filelist.length===1 && ext==="zip") {
+                    document.getElementById('zipfile').innerHTML = 'Unzip';                    
+                }
             }
+            const selAll = document.getElementById("selectall");
+            selAll.addEventListener('click', function() {
+                const sel = document.querySelectorAll(".select input");
+                for(var i=1; i<sel.length; i++) {
+                    if (sel[i].checked===false) {
+                        sel[i].checked=true;
+                    } else {
+                        sel[i].checked=false;
+                    }
+                }
+            });
             function getChecked(dir) {
                 var dirname = document.querySelectorAll('input[class="dirname form-check-input"]:checked'), seldir = [];
                 Array.prototype.forEach.call(dirname, function(e) {
@@ -728,7 +913,6 @@
         </script>
         <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
         {% if g.gridview %}
-        <script src="{{ url_for('static', filename='dropzone.min.js') }}"></script>
         <script>
             const extlist = document.querySelectorAll("#gridview h4");
             for (i=0; i<extlist.length; i++) {
@@ -821,7 +1005,6 @@
                 totalFiles += files.length;
                 const fileList = document.querySelector(".file-list");
                 const fileCompletedStatus = document.querySelector(".file-completed-status");
-                
     
                 // Every Single File Progress
                 files.forEach((file, index) => {
@@ -868,6 +1051,8 @@
                 const xhr = new XMLHttpRequest();
                 const formData = new FormData();
                 formData.append("file", file);
+                dest = root + location.pathname.slice(6);
+                formData.append("dest", dest);
     
                 xhr.upload.addEventListener("progress", function(e) {
                     const fileProgress = document.querySelector(`#file-item-${uniqueId} .file-progress`);
@@ -879,7 +1064,7 @@
                     fileProgress.style.width = `${progress}%`;
                     fileSize.innerText = fsize;
                 });
-                xhr.open("POST", "{{ cur_dir }}", true);
+                xhr.open("POST", "/api/upload", true);
                 xhr.send(formData);
                 return xhr;
             }

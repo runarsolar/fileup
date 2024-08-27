@@ -47,8 +47,6 @@ def files(url=''):
     
     if g.gridview:
         parallel_thumb(lists)
-
-    postSend(url)
     
     return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
 
@@ -112,19 +110,30 @@ def get_lists():
     lists = {'dirs':dirs, 'files':files}
     return json.dumps(lists, ensure_ascii=False)
 
-@app.route('/api/operate', methods=('GET','POST'))
+@app.route('/api/operate', methods=('POST',))
 def operate():
     req = request.json
     print(req)
-    status = 'ok'
-    msg = []
-    if req['op'] == 'new':
+    res = {'status':'ok','msg':'','redirect':'page'}
+
+    if req['op'] == 'newfolder':
+        if req['redirect'] :
+            res['redirect'] = req['redirect']
         to_dir = req['to_dir']
         if to_dir == '/':
             to_dir = ''
-        path = req['to_drive'] + ':' + to_dir + '/' + req['foldername']
+        path = req['to_drive'] + ':' + to_dir + '/' + req['name']
         flash('new folder created at ' + path)
         os.mkdir(path)
+    
+    if req['op'] == 'newfile':
+        to_dir = req['to_dir']
+        if to_dir == '/':
+            to_dir = ''
+        path = req['to_drive'] + ':' + to_dir + '/' + req['name']
+        flash('new file created at ' + path)
+        f = open(path, 'x')
+        f.close()
 
     if req['op'] == 'rename':
         to_dir = req['to_dir']
@@ -160,9 +169,11 @@ def operate():
 
         if dirlist != ['']:
             for dir in dirlist:
+                flash('Move ' + from_path + '/' + dir + ' to ' + to_path)
                 shutil.move(from_path + '/' + dir, to_path)
         if filelist != ['']:
             for file in filelist:
+                flash('Move ' + from_path + '/' + file + ' to ' + to_path)
                 shutil.move(from_path + '/' + file, to_path)
     
     if req['op'] == 'copy':
@@ -176,9 +187,11 @@ def operate():
                 print(from_path + '/' + dir)
                 print(to_path)
                 os.mkdir(to_path + '/' + dir)
+                flash('Copy ' + from_path + '/' + dir + ' to ' + to_path)
                 shutil.copytree(from_path + '/' + dir, to_path + '/' + dir, dirs_exist_ok=True)
         if filelist != ['']:
             for file in filelist:
+                flash('Copy ' + from_path + '/' + file + ' to ' + to_path)
                 shutil.copy(from_path + '/' + file, to_path)
     
     if req['op'] == 'changeDrive':
@@ -188,29 +201,59 @@ def operate():
     if req['op'] == 'changeView':
         global gridview
         gridview = not gridview
-    
-    res = {'status': status, 'msg': msg}
+
+    if req['op'] == 'archive':
+        path = req['to_drive'] + ':' + req['to_dir'] + '/' + req['dirname']
+        flash(path + '.zip created')
+        shutil.make_archive(path, 'zip', path)
+
+    if req['op'] == 'unzip':
+        path = req['to_drive'] + ':' + req['to_dir'] + '/' + req['zipfile']
+        flash(path + 'unzipped to ' + path + '/' + req['zipfile'][:-4])
+        print(req['zipfile'])
+        shutil.unpack_archive(path, path[:-4])
+
+    if req['op'] == 'zip':
+        from zipfile import ZipFile
+        myzip = ZipFile(req['to_drive'] + ':' + req['to_dir'] + '/' + 'output.zip', 'w')
+        for file in req['filelist']:
+            path = req['to_drive'] + ':' + req['to_dir'] + '/' + file
+            print(path)
+            myzip.write(path, file)
+        myzip.close()
+        flash('zipped to ' + req['to_drive'] + ':' + req['to_dir'] + '/' + 'output.zip')
+
     return json.dumps(res)
 
+@app.route('/api/upload', methods=('POST',))
+def upload():
+    path = request.form['dest']
+    file = request.files['file']
 
-def postSend(url):
-    if request.method == 'POST':
-        global root
-        
-        # Upload one or more files
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        if (file.filename == ''):
-            flash('No selected file')
-            return redirect(request.url)
-        fileup = os.path.join('uploads/', file.filename)
-        file.save(fileup)
-        filedest = os.path.join(root, url, file.filename)
-        shutil.move(fileup, filedest)
-        return redirect(request.url)
-    return
+    fileup = os.path.join('uploads/', file.filename)
+    file.save(fileup)
+    filedest = path + '/' + file.filename
+    shutil.move(fileup, filedest)
+    return 'ok'
+
+@app.route('/api/openfile', methods=('POST',))
+def openfile():
+    req = request.json
+    res = {'status':'ok','msg':'','redirect':'no', 'txt':''}
+    if req['op'] == 'open':
+        path = req['to_drive'] + ':' + req['to_dir'] + '/' + req['name']
+        f = open(path, "r")
+        res['txt'] = f.read()
+        f.close()
+    elif req['op'] == 'save':
+        path = req['path']
+        print(path)
+        res['txt'] = req['txt']
+        f = open(path, 'w')
+        f.write(req['txt'])
+        f.close()
+
+    return json.dumps(res)
 
 @app.route('/cache/<filename>')
 def show_thumb(filename):
