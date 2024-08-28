@@ -40,10 +40,6 @@
                 display: none;
             }
 
-            .afterselect {
-                display: none;
-            }
-
             .card label {
                 padding: 4px 16px 12px 8px;
                 position: absolute;
@@ -127,20 +123,20 @@
         <header class="d-flex flex-wrap pt-2 align-items-center justify-content-center justify-content-sm-between">
             <ul class="nav">
                 <li>
-                    <button class="btn btn-sm btn-outline-primary mx-2 mb-1"
+                    <button class="btn btn-sm btn-outline-primary mx-2"
                     data-bs-toggle="modal" data-bs-target="#upload">
                         <svg width="16" height="16" fill="currentColor" class="bi" viewBox="0 0 16 16"><use href="#up-icon"></use></svg>
                         File Upload
                     </button>
                 </li>
                 <li>
-                    <button class="btn btn-sm btn-outline-secondary me-2 mb-1"
+                    <button class="btn btn-sm btn-outline-secondary me-2"
                     data-bs-toggle="modal" data-bs-target="#new">New</button>
                 </li>
                 
             </ul>
             <div class="nav">
-                <div class="dropdown bd-mode-toggle me-2 mb-1">
+                <div class="dropdown bd-mode-toggle me-2">
                         <button class="btn btn-sm btn-bd-primary dropdown-toggle d-flex align-items-center"
                                 id="bd-theme"
                                 type="button"
@@ -175,47 +171,61 @@
                         </ul>
                 </div>
 
-                <button class="btn btn-sm btn-outline-secondary me-2 mb-1" id="btnSelect"
+                <button class="btn btn-sm btn-outline-secondary me-2" id="btnSelect"
                 onclick="btnSelect()" style="float: right;">
                     Select
                 </button>
 
                 {% if g.gridview %}
-                <button id="onlypicbtn" class="btn btn-sm btn-outline-secondary me-2 mb-1" type="button" onclick="onlyPic()">
+                <button id="onlypicbtn" class="btn btn-sm btn-outline-secondary me-2" type="button" onclick="onlyPic()">
                     OnlyPic
                 </button>
                 {% endif %}
 
-                <button type="button" class="btn btn-sm btn-secondary me-2 mb-1" style="float: right;" onclick="changeView()">
+                <button type="button" class="btn btn-sm btn-secondary me-2" style="float: right;" onclick="changeView()">
                     {% if g.gridview %}Grid{% else %}List{% endif %}
                 </button>
-            </div>
+                {% if g.auth %}
+                <div class="dropdown me-2">
+                    <button class="btn btn-sm btn-outline-success dropdown-toggle"
+                            type="button" data-bs-toggle="dropdown">
+                        {{ g.user['username'] }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                      <li>
+                        <button type="button" class="dropdown-item" onclick="logout()">
+                            Logout
+                        </button>
+                      </li>
+                    </ul>
+                </div>
+                {% endif %}
         </header>
-        <ul class="nav">
+        <ul id="afterselect" class="nav sticky-top bg-body-tertiary py-1 d-none">
             <li>
-                <button class="btn btn-sm btn-outline-dark mx-2 mb-1 afterselect"
+                <button class="btn btn-sm btn-outline-dark mx-2"
                 onclick="openTxt()">OpenTxt</button>
             </li>
             <li>
-                <button id="zipfile" class="btn btn-sm btn-outline-dark me-2 mb-1 afterselect"
+                <button id="zipfile" class="btn btn-sm btn-outline-dark me-2"
                 onclick="zipFile()">Zip</button>
             </li>
             <li>
-                <button class="btn btn-sm btn-outline-secondary me-2 mb-1 afterselect"
+                <button class="btn btn-sm btn-outline-secondary me-2"
                 onclick="preRename()">Rename</button>
             </li>
             <li>
-                <button class="btn btn-sm btn-outline-secondary me-2 mb-1 afterselect"
+                <button class="btn btn-sm btn-outline-secondary me-2"
                 onclick="getList();showPath();moveModal()"
                 data-bs-toggle="modal" data-bs-target="#move">Move</button>
             </li>
             <li>
-                <button class="btn btn-sm btn-outline-secondary me-2 mb-1 afterselect"
+                <button class="btn btn-sm btn-outline-secondary me-2"
                 onclick="getList();showPath();copyModal()"
                 data-bs-toggle="modal" data-bs-target="#move">Copy</button>
             </li>
             <li>
-                <button class="btn btn-sm btn-outline-secondary mb-1 afterselect"
+                <button class="btn btn-sm btn-outline-secondary"
                 data-bs-toggle="modal" data-bs-target="#del">Delete</button>
             </li>
         </ul>
@@ -287,7 +297,7 @@
         </div>
         <div id="move" class="modal fade">
             <div class="modal-dialog">
-                <div class="modal-content" style="height: 90vh;">
+                <div class="modal-content" style="height: 600px;">
                     <div class="modal-header border-bottom-0 pb-0">
                         <p class="modal-title fs-5">Select the Directory to Move</p>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -434,7 +444,7 @@
         <div id="listview">
         <table class="table table-hover table-borderless table-sm">
             <tr>
-                <th class="select"><input type="checkbox" class="form-check-input" id="selectall"></th>
+                <th class="select" style="width: 24px;"><input type="checkbox" class="form-check-input" id="selectall"></th>
                 <th>Name</th>
                 <th class="size">Size</th>
             </tr>
@@ -481,7 +491,6 @@
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState==4 && xhr.status===200) {
                         var json = JSON.parse(xhr.responseText);
-                        console.log(json);
                         if (json.redirect==='page') {
                             location.reload();
                         }
@@ -529,6 +538,7 @@
                     pathitem.push('');
                 }
                 for (i=1; i<pathitem.length; i++) {
+                    pathitem[i] = decodeURI(pathitem[i]);
                     var item = `<li class="breadcrumb-item"><a onclick="prevDir(this)">${pathitem[i]}</a></li>`;
                     selectdir.innerHTML += item;
                 }
@@ -744,6 +754,12 @@
                     alert('you can put them into one folder');
                 }
             }
+            function logout() {
+                data = JSON.stringify({
+                    'op': 'logout',
+                });
+                sendJSON('/api/auth', data);
+            }
             const checkboxs = document.querySelectorAll("input[type=checkbox]");
             checkboxs.forEach(function(checkbox) {
                 checkbox.addEventListener('change', function() {
@@ -774,9 +790,8 @@
                 }
                 var name = filelist[0];
                 var ext = '.' + name.split('.').slice(-1);
-                if (!['.txt','.py'].includes(ext)) {
-                    alert('not support file type');
-                    return;
+                if (!['.txt', '.md', '.py', '.html', '.css', '.js'].includes(ext)) {
+                    confirm('Is it a real text file? click OK to open')
                 }
                 var drive = root[0];
                 var path = location.pathname.slice(6);
@@ -836,15 +851,13 @@
                 if (selectmode===true) {
                     btnSel.innerHTML = "Cancel";
                 } else {
-                    btnSel.innerHTML = "Select"
+                    btnSel.innerHTML = "Select";
                 }
-                var a = document.getElementsByClassName("afterselect");
-                for (var i = 0; i<a.length; i++) {
-                    if (selectmode===true) {
-                        a[i].style.display = "block";
-                    } else {
-                        a[i].style.display = "none";
-                    }
+                var hidenav = document.getElementById('afterselect')
+                if (selectmode===true) {
+                    hidenav.classList.remove('d-none');
+                } else {
+                    hidenav.classList.add('d-none');
                 }
                 var x = document.getElementsByClassName("select");
                 for (let i = 0; i < x.length; i++) {
@@ -892,7 +905,7 @@
             const listicon = document.querySelectorAll("#listview svg");
             for (i=0; i<listicon.length; i++) {
                 var ext = '.' + listicon[i].parentElement.innerText.split('.').slice(-1)[0];
-                if (['.jpg','.jpeg','.png','.gif','.tiff','.bmp','.psd'].includes(ext)) {
+                if (['.jpg','.jpeg','.png','.gif','.tiff','.bmp','.psd', '.webp'].includes(ext)) {
                     listicon[i].innerHTML = '<use href="#type-img"></use>';
                 } else if (['.exe','.msi'].includes(ext)) {
                     listicon[i].innerHTML = '<use href="#type-bin"></use>';

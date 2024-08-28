@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+        <style>
+            html, body {
+                height: 100%;
+            }
+            .form-signin {
+                max-width: 330px;
+                padding: 1rem;
+            }
+            .form-signin .form-floating:focus-within {
+                z-index: 2;
+            }
+            .form-signin input[type="text"] {
+                margin-bottom: -1px;
+                border-bottom-right-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+            .form-signin input[type="password"] {
+                margin-bottom: 10px;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
+        </style>
+    </head>
+    <body class="d-flex align-items-center py-4 bg-body-tertiary">
+        
+        <main class="form-signin w-100 m-auto">
+            <h1 class="h3 mb-3 fw-normal">User Authentication</h1>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info alert-dismissible fade show p-2 m-2">
+                {{ message }}
+            <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+          
+            <div class="form-floating">
+                <input type="text" class="form-control" id="username" placeholder="Username">
+                <label for="username">Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="password" class="form-control" id="password" placeholder="Password">
+                <label for="password">Password</label>
+            </div>
+            <button class="btn btn-primary w-100 mb-2" type="button" onclick="login()">Log in</button>
+            {% if g.reg %}
+            <button class="btn btn-outline-primary w-100" type="button" onclick="register()">Register</button>
+            {% endif %}
+        </main>
+        <script src="{{ url_for('static', filename='bootstrap.bundle.min.js')}}"></script>
+        <script>
+            function sendJSON(url, data) {
+                var xhr = new XMLHttpRequest();
+                var url = url;
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onload = function() {
+                    var json = JSON.parse(xhr.responseText);
+                    if (json.redirect==='page') {
+                        location.reload();
+                    }
+                }
+                xhr.send(data);
+            }
+            function login() {
+                username = document.getElementById('username').value;
+                password = document.getElementById('password').value;
+                data = JSON.stringify({
+                    'op': 'login',
+                    'username': username,
+                    'password': password,
+                });
+                sendJSON('/api/auth', data);
+            }
+        </script>
+        {% if g.reg %}
+        <script>
+            function register() {
+                username = document.getElementById('username').value;
+                password = document.getElementById('password').value;
+                if (username==='') {
+                    alert('Username is necessary');
+                    return;
+                }
+                if (password==='') {
+                    alert('password is necessary');
+                    return;
+                }
+                data = JSON.stringify({
+                    'op': 'register',
+                    'username': username,
+                    'password': password,
+                });
+                sendJSON('/api/auth', data);
+            }
+        </script>
+        {% endif %}
+    </body>
+</html>

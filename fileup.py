@@ -1,5 +1,6 @@
-from flask import Flask, render_template, flash, request, send_file, redirect, url_for, g
-import os, shutil, hashlib, argparse, json
+from flask import Flask, render_template, flash, request, send_file, redirect, url_for, g, session
+from werkzeug.security import check_password_hash, generate_password_hash
+import os, shutil, hashlib, argparse, json, sqlite3
 from urllib.parse import quote, unquote
 from PIL import Image
 from multiprocessing import Pool, freeze_support
@@ -11,19 +12,43 @@ app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 root = 'D:/'
+cur_path = "/"
+use_auth = False
+reg = True
 gridview = False
 if not os.path.exists('uploads'):
     os.mkdir('uploads')
 if not os.path.exists('uploads/cache'):
     os.mkdir('uploads/cache')
 
+@app.before_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+
+    if user_id is None:
+        g.user = None
+    else:
+        db = sqlite3.connect('fileup.db')
+        db.row_factory = sqlite3.Row
+        g.user = db.execute(
+            'SELECT * FROM user WHERE id = ?', (user_id,)
+        ).fetchone()
+
 @app.route('/')
 def index():
-    return redirect(url_for('files'))
+    g.reg = reg
+    if use_auth is False or g.user is not None:
+        return redirect('/files')
+
+    return render_template('auth.html')
 
 @app.route('/files/', methods=['GET', 'POST'])
 @app.route('/files/<path:url>', methods=['GET', 'POST'])
 def files(url=''):
+    g.auth = use_auth
+    if use_auth is True and g.user is None:
+        return redirect('/')
+    
     global root
     g.gridview = gridview
     g.drive = root[:2]
@@ -255,6 +280,45 @@ def openfile():
 
     return json.dumps(res)
 
+@app.route('/api/auth', methods=('POST',))
+def user_auth():
+    req = request.json
+    print(req)
+    res = {'status':'ok', 'msg':'','redirect':'page'}
+    db = sqlite3.connect('fileup.db')
+    db.row_factory = sqlite3.Row
+
+    if req['op'] == 'register' and reg == True:
+        username = req['username']
+        password = req['password']
+        cursor = db.cursor()
+        try:
+            cursor.execute("INSERT INTO user (username, password) VALUES (?, ?)",
+                           (username, generate_password_hash(password)))
+            db.commit()
+            flash('register successed')
+        except:
+            flash('username has been registered')
+
+    if req['op'] == 'login':
+        username = req['username']
+        password = req['password']
+        user = db.execute(
+            'SELECT * FROM user WHERE username = ?', (username,)
+        ).fetchone()
+        if user is None:
+            flash('Incorrect username')
+        elif not check_password_hash(user['password'], password):
+            flash('Incorrect password.')
+        else:
+            session.clear()
+            session['user_id'] = user['id']
+
+    if req['op'] == 'logout':
+        session.clear()
+
+    return json.dumps(res)
+
 @app.route('/cache/<filename>')
 def show_thumb(filename):
     path = os.getcwd() + '/uploads/cache/'
@@ -264,7 +328,7 @@ def parallel_thumb(lists):
     piclist = []
     picname = []
     for file in lists[1]:
-        if file['type'] in ['.jpg', '.jpeg', '.png', '.bmp']:
+        if file['type'] in ['.jpg', '.jpeg', '.png', '.bmp', '.webp']:
             file['ispic'] = True
             pic_path = file['path']
             m = hashlib.sha256()
@@ -302,11 +366,22 @@ def sizedisp(num):
         num /= 1024.0
     return f"{num:.1f} GB"
 
+def create_db():
+    db = sqlite3.connect('fileup.db')
+    cursor = db.cursor()
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS user( \
+            id integer primary key autoincrement, \
+            username text unique not null, password text)")
+    db.commit()
+    db.close()
+
 if __name__ == '__main__':
     freeze_support()
     parser = argparse.ArgumentParser(description="down and up files")
     parser.add_argument('-p', "--port", help="change default port")
     parser.add_argument('-r', "--root", help="change start directory like C:/")
+    parser.add_argument('-u', "--auth", help="reg/noreg to enable register")
     args =  parser.parse_args()
     if args.root != None:
         root = args.root 
@@ -314,5 +389,12 @@ if __name__ == '__main__':
         port = 5000
     else:
         port = args.port
+    if args.auth == 'reg':
+        use_auth = True
+        create_db()
+    if args.auth == 'noreg':
+        use_auth = True
+        reg = False
+        create_db()
     
     app.run('0.0.0.0', port=port, debug=True)
