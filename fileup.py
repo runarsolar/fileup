@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 root = 'D:/'
-cur_path = "/"
+cur_path = ""
 use_auth = False
 reg = True
 gridview = False
@@ -49,16 +49,18 @@ def files(url=''):
     if use_auth is True and g.user is None:
         return redirect('/')
     
-    global root
+    global root, cur_path
     g.gridview = gridview
-    g.drive = root[:2]
-    drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
+    g.drive = root
+    drives = [ chr(x) + ":/" for x in range(65,91) if os.path.exists(chr(x) + ":/") ]
+    if drives == []:
+        root = '/'
 
     path = os.path.join(root, unquote(url))
+    cur_path = unquote(url)
+    g.cur_path = cur_path
     if not os.path.exists(path):
-        return redirect(url_for('files'))
-    if not os.path.exists(path):
-        root = os.getcwd() +'/'
+        return redirect('/')
         
     if url == '':
         cur_dir = '/files'
@@ -79,7 +81,7 @@ def show_file(dir):
     dirs = []
     files = []
     for filename in os.listdir(dir):
-        path = os.path.join(dir, filename)
+        path = os.path.join(dir, filename).replace('\\','/')
         if os.path.isdir(path):
             info = {}
             info['name'] = filename
@@ -101,31 +103,43 @@ def show_file(dir):
 
 @app.route('/api/drives', methods=('POST',))
 def get_drives():
-    drive = root[:2]
-    drives = [ chr(x) + ":" for x in range(65,91) if os.path.exists(chr(x) + ":") ]
-    res = {"nowdrive": drive, "alldrives": drives}
+    drive = root
+    drives = [ chr(x) + ":/" for x in range(65,91) if os.path.exists(chr(x) + ":/") ]
+    res = {
+        "nowdrive": drive,
+        "nowpath": cur_path,
+        "alldrives": drives,
+        "use_auth": use_auth,
+        "gridview": gridview,
+        "allowreg": reg
+        }
     return json.dumps(res)
 
+@app.route('/api/listdetail', methods=('POST',))
+def get_listdetail():
+    req = request.json
+    drive = req['to_drive']
+    if drive=="":
+        drive = "/"
+    path = req['to_dir']
+    dir = drive + path
+    lists = show_file(dir)
+    listdetail = {'dirs':lists[0],'files':lists[1]}
+    return json.dumps(listdetail, ensure_ascii=False)
 
-@app.route('/api/lists', methods=('GET','POST'))
+@app.route('/api/lists', methods=('POST',))
 def get_lists():
-    path = request.args.get('path')
-    if path == None:
-        path = ''
-    drive = request.args.get('drive')
-    if drive == None:
-        dir = '/'
-    elif drive == '':
-        dir = '/'
-    elif drive == '/':
-        dir = '/' + path
-    else:
-        dir = drive + ':/' + path
+    req = request.json
+    drive = req['to_drive']
+    if drive=="":
+        drive = "/"
+    path = req['to_dir']
+    dir = drive + path
 
     dirs = []
     files = []
     for name in os.listdir(dir):
-        path = os.path.join(dir, name)
+        path = dir + '/' + name
         if os.path.isdir(path):
             dirs.append(name)
         elif os.path.isfile(path):
@@ -144,36 +158,25 @@ def operate():
     if req['op'] == 'newfolder':
         if req['redirect'] :
             res['redirect'] = req['redirect']
-        to_dir = req['to_dir']
-        if to_dir == '/':
-            to_dir = ''
-        path = req['to_drive'] + ':' + to_dir + '/' + req['name']
+        path = os.path.join(req['to_drive'], req['to_dir'] + '/' , req['name'])
         flash('new folder created at ' + path)
         os.mkdir(path)
     
     if req['op'] == 'newfile':
-        to_dir = req['to_dir']
-        if to_dir == '/':
-            to_dir = ''
-        path = req['to_drive'] + ':' + to_dir + '/' + req['name']
+        path = os.path.join(req['to_drive'], req['to_dir'] + '/', req['name'])
         flash('new file created at ' + path)
         f = open(path, 'x')
         f.close()
 
     if req['op'] == 'rename':
-        to_dir = req['to_dir']
-        if to_dir == '/':
-            to_dir = ''
-        path = req['to_drive'] + ':' + to_dir + '/' + req['oldname']
-        dest = req['to_drive'] + ':' + to_dir + '/' + req['newname']
-        flash(dest + ' renamed')
-        os.rename(path, dest)
+        path = os.path.join(req['to_drive'], req['to_dir'] + '/')
+        old = path + req['oldname']
+        new = path + req['newname']
+        flash(new + ' renamed')
+        os.rename(old, new)
     
     if req['op'] == 'delete':
-        to_dir = req['to_dir']
-        if to_dir == '/':
-            to_dir = ''
-        delpath = req['to_drive'] + ':' + to_dir + '/'
+        delpath = os.path.join(req['to_drive'], req['to_dir'] + '/')
         deldir = req['deldir']
         delfile = req['delfile']
         
@@ -189,75 +192,86 @@ def operate():
     if req['op'] == 'move':
         dirlist = req['dirlist']
         filelist = req['filelist']
-        from_path = req['from_drive'] +':' + req['from_dir']
-        to_path = req['to_drive'] +':' + req['to_dir']
+        from_path = os.path.join(req['from_drive'], req['from_dir'] + '/')
+        to_path = req['to_drive'] + req['to_dir'] + '/'
 
         if dirlist != ['']:
             for dir in dirlist:
-                flash('Move ' + from_path + '/' + dir + ' to ' + to_path)
-                shutil.move(from_path + '/' + dir, to_path)
+                if os.path.exists(to_path + dir):
+                    flash('same name folder in dest dir')
+                    continue
+                flash('Move ' + from_path + dir + ' to ' + to_path)
+                shutil.move(from_path + dir, to_path)
         if filelist != ['']:
             for file in filelist:
-                flash('Move ' + from_path + '/' + file + ' to ' + to_path)
-                shutil.move(from_path + '/' + file, to_path)
+                if os.path.exists(to_path + file):
+                    flash('same name file in dest dir')
+                    continue
+                flash('Move ' + from_path + file + ' to ' + to_path)
+                shutil.move(from_path + file, to_path)
     
     if req['op'] == 'copy':
         dirlist = req['dirlist']
         filelist = req['filelist']
-        from_path = req['from_drive'] +':' + req['from_dir']
-        to_path = req['to_drive'] +':' + req['to_dir']
+        from_path = os.path.join(req['from_drive'], req['from_dir'] + '/')
+        to_path = req['to_drive'] + req['to_dir'] + '/'
 
         if dirlist != ['']:
             for dir in dirlist:
-                print(from_path + '/' + dir)
-                print(to_path)
-                os.mkdir(to_path + '/' + dir)
-                flash('Copy ' + from_path + '/' + dir + ' to ' + to_path)
-                shutil.copytree(from_path + '/' + dir, to_path + '/' + dir, dirs_exist_ok=True)
+                if os.path.exists(to_path + dir):
+                    flash('same name folder in dest dir')
+                    continue
+                flash('Copy ' + from_path + dir + ' to ' + to_path)
+                shutil.copytree(from_path + dir, to_path + dir)
         if filelist != ['']:
             for file in filelist:
-                flash('Copy ' + from_path + '/' + file + ' to ' + to_path)
-                shutil.copy(from_path + '/' + file, to_path)
+                if os.path.exists(to_path + file):
+                    flash('same name file in dest dir')
+                    continue
+                flash('Copy ' + from_path + file + ' to ' + to_path)
+                shutil.copy(from_path + file, to_path)
     
     if req['op'] == 'changeDrive':
         global root
-        root = req['drivename'] + ':/'
+        root = req['drivename']
 
     if req['op'] == 'changeView':
         global gridview
         gridview = not gridview
 
+    # zip a single folder
     if req['op'] == 'archive':
-        path = req['to_drive'] + ':' + req['to_dir'] + '/' + req['dirname']
+        path = os.path.join(req['to_drive'], req['to_dir'] + '/',req['dirname'])
         flash(path + '.zip created')
         shutil.make_archive(path, 'zip', path)
 
+    # unzip a single .zip file
     if req['op'] == 'unzip':
-        path = req['to_drive'] + ':' + req['to_dir'] + '/' + req['zipfile']
-        flash(path + 'unzipped to ' + path + '/' + req['zipfile'][:-4])
-        print(req['zipfile'])
+        path = os.path.join(req['to_drive'], req['to_dir'] + '/', req['zipfile'])
+        flash(path + ' unzipped')
         shutil.unpack_archive(path, path[:-4])
 
+    # zip some files into output.zip
     if req['op'] == 'zip':
         from zipfile import ZipFile
-        myzip = ZipFile(req['to_drive'] + ':' + req['to_dir'] + '/' + 'output.zip', 'w')
+        dest = os.path.join(req['to_drive'], req['to_dir'] + '/')
+        out = dest + 'output.zip'
+        myzip = ZipFile(out, 'w')
         for file in req['filelist']:
-            path = req['to_drive'] + ':' + req['to_dir'] + '/' + file
-            print(path)
+            path = dest + file
             myzip.write(path, file)
         myzip.close()
-        flash('zipped to ' + req['to_drive'] + ':' + req['to_dir'] + '/' + 'output.zip')
+        flash('zipped to ' + out)
 
     return json.dumps(res)
 
 @app.route('/api/upload', methods=('POST',))
 def upload():
-    path = request.form['dest']
     file = request.files['file']
 
-    fileup = os.path.join('uploads/', file.filename)
+    fileup = 'uploads/' + file.filename
     file.save(fileup)
-    filedest = path + '/' + file.filename
+    filedest = os.path.join(root, cur_path + '/', file.filename)
     shutil.move(fileup, filedest)
     return 'ok'
 
@@ -266,7 +280,7 @@ def openfile():
     req = request.json
     res = {'status':'ok','msg':'','redirect':'no', 'txt':''}
     if req['op'] == 'open':
-        path = req['to_drive'] + ':' + req['to_dir'] + '/' + req['name']
+        path = os.path.join(req['to_drive'], req['to_dir'] + '/', req['name'])
         f = open(path, "r")
         res['txt'] = f.read()
         f.close()

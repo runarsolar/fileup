@@ -61,6 +61,9 @@
     </head>
     <body class="bg-body-tertiary">
         <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+            <symbol id="house-icon" viewBox="0 0 16 16">
+                <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5"></path>
+            </symbol>
             <symbol id="up-icon" viewBox="0 0 16 16">
                 <path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707z"/>
                 <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
@@ -133,7 +136,6 @@
                     <button class="btn btn-sm btn-outline-secondary me-2"
                     data-bs-toggle="modal" data-bs-target="#new">New</button>
                 </li>
-                
             </ul>
             <div class="nav">
                 <div class="dropdown bd-mode-toggle me-2">
@@ -185,6 +187,7 @@
                 <button type="button" class="btn btn-sm btn-secondary me-2" style="float: right;" onclick="changeView()">
                     {% if g.gridview %}Grid{% else %}List{% endif %}
                 </button>
+
                 {% if g.auth %}
                 <div class="dropdown me-2">
                     <button class="btn btn-sm btn-outline-success dropdown-toggle"
@@ -200,8 +203,9 @@
                     </ul>
                 </div>
                 {% endif %}
+            </div>
         </header>
-        <ul id="afterselect" class="nav sticky-top bg-body-tertiary py-1 d-none">
+        <ul id="afterselect" class="nav sticky-top bg-body-tertiary py-1 d-none d-flex">
             <li>
                 <button class="btn btn-sm btn-outline-dark mx-2"
                 onclick="openTxt()">OpenTxt</button>
@@ -225,8 +229,11 @@
                 data-bs-toggle="modal" data-bs-target="#move">Copy</button>
             </li>
             <li>
-                <button class="btn btn-sm btn-outline-secondary"
+                <button class="btn btn-sm btn-outline-secondary me-2"
                 data-bs-toggle="modal" data-bs-target="#del">Delete</button>
+            </li>
+            <li class="ms-auto px-2 pt-1 text-secondary">
+                <div id="selnum">0 Selected</div>
             </li>
         </ul>
 
@@ -306,7 +313,7 @@
                         <ul class="curdrive nav nav-tabs mt-2">
                             {% for drive in drives %}
                             <li class="nav-item">
-                                <button onclick="selectDrive(this)" class="nav-link {% if drive==g.drive %}active{% endif %}">{{ drive }}</button>
+                                <button onclick="selectDrive(this)" class="nav-link {% if drive==g.drive %}active{% endif %}">{{ drive[:2] }}</button>
                             </li>
                             {% endfor %}
                         </ul>
@@ -345,12 +352,12 @@
 
         {% with messages = get_flashed_messages() %}
         {% if messages %}
-        {% for message in messages %}
         <div class="alert alert-info alert-dismissible fade show p-2 m-2">
-            {{ message }}
+            {% for message in messages %}
+            {{ message }}<br>
+            {% endfor %}
             <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        {% endfor %}
         {% endif %}
         {% endwith %}
 
@@ -358,7 +365,7 @@
             <ul id="drivename" class="nav nav-tabs mt-2">
                 {% for drive in drives %}
                 <li class="nav-item">
-                    <button class="nav-link {% if drive==g.drive %}active{% endif %}" onclick="changeDrive(this)">{{ drive }}</button>
+                    <button class="nav-link {% if drive==g.drive %}active{% endif %}" onclick="changeDrive(this)">{{ drive[:2] }}</button>
                 </li>
                 {% endfor %}
             </ul>
@@ -367,8 +374,8 @@
             <ol id="bread" class="breadcrumb breadcrumb-chevron bg-body-tertiary p-2 m-0">
               <li class="breadcrumb-item">
                 <a class="link-body-emphasis" href="/files">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-door-fill" viewBox="0 0 16 16">
-                        <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5"></path>
+                    <svg width="16" height="16" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                        <use href="#house-icon"></use>
                     </svg>
                     <span class="visually-hidden">Home</span>
                 </a>
@@ -483,6 +490,7 @@
       </div>
         <script>
             var root = '{{ g.drive }}';
+            var cur_path = '{{ g.cur_path }}'
             function sendJSON(url, data) {
                 var xhr = new XMLHttpRequest();
                 var url = url;
@@ -495,56 +503,73 @@
                             location.reload();
                         }
                     }
-                    return xhr.responseText;
                 }
                 xhr.send(data);
                 return xhr;
             }
-            var cur_drive = document.querySelector("#move .curdrive .active").innerText[0];
-            var cur_path = location.pathname.slice(6);
+            var sel_drive = root;
+            var sel_path = cur_path;
             function selectDrive(obj) {
                 document.querySelector("#move .curdrive .active").classList.remove("active");
                 obj.classList.add("active");
-                cur_drive = obj.innerText[0];
-                cur_path = '/';
-                getList(cur_path, cur_drive);
-                showPath(cur_path, cur_drive);
+                sel_drive = obj.innerText + '/';
+                sel_path = '';
+                getList(sel_path, sel_drive);
+                showPath(sel_path, sel_drive);
             }
             function prevDir(obj) {
                 var index = [...obj.parentElement.parentElement.children].indexOf(obj.parentElement);
-                var prev = cur_path.split('/').slice(0, index+1).join('/');
-                getList(prev, cur_drive);
-                showPath(prev, cur_drive);
-                cur_path = prev;
+                var prev;
+                if (index===0) {
+                    prev = "";
+                } else {
+                    prev = sel_path.split('/').slice(0, index).join('/');
+                }
+                console.log(index);
+                console.log(prev);
+                getList(prev, sel_drive);
+                showPath(prev, sel_drive);
+                sel_path = prev;
             }
             function nextDir(obj) {
-                if (cur_path==='/') {
-                    cur_path='';
+                if (sel_path==="") {
+                    next = obj.innerText;
+                } else {
+                    next = sel_path + '/' + obj.innerText;
                 }
-                var next = cur_path + '/' + obj.innerText;
-                getList(next, cur_drive);
-                showPath(next, cur_drive);
-                cur_path = next;
+                getList(next, sel_drive);
+                showPath(next, sel_drive);
+                sel_path = next;
             }
-            function showPath(path=cur_path, drive=cur_drive) {
-                var home = `<li class="breadcrumb-item">
-                                <a onclick="prevDir(this)">${drive+':'}</a>
-                              </li>`;
+            function showPath(path=sel_path, drive=sel_drive) {
                 const selectdir = document.querySelector("#move .selectdir");
-                selectdir.innerHTML = home;
-
-                var pathitem = path.split('/');
-                if (pathitem.length===1) {
-                    pathitem.push('');
+                selectdir.innerHTML = "";
+                var pathitem = [];
+                if (path==="") {
+                    pathitem[0] = drive.slice(0, 2);
+                } else {
+                    if (drive==="/") {
+                        path = "root/" + path;
+                    } else {
+                        path = drive + path;
+                    }
+                    pathitem = path.split('/');
                 }
-                for (i=1; i<pathitem.length; i++) {
+                for (i=0; i<pathitem.length; i++) {
                     pathitem[i] = decodeURI(pathitem[i]);
                     var item = `<li class="breadcrumb-item"><a onclick="prevDir(this)">${pathitem[i]}</a></li>`;
                     selectdir.innerHTML += item;
                 }
             }
-            function getList(path=cur_path, drive=cur_drive) {
+            function getList(path=sel_path, drive=sel_drive) {
                 const xhr = new XMLHttpRequest();
+                var data = JSON.stringify({
+                    "op": "listdir",
+                    "to_drive": drive,
+                    "to_dir": path,
+                });
+                xhr.open("POST", "/api/lists");
+                xhr.setRequestHeader("Content-Type", "application/json");
                 xhr.onload = function() {
                     var res = JSON.parse(this.responseText);
                     var lists = res.dirs;
@@ -557,8 +582,7 @@
                         dirlists.innerHTML += item;
                     }
                 }
-                xhr.open("GET", `/api/lists?path=${path}&drive=${drive}`);
-                xhr.send();
+                xhr.send(data);
             }
             function opMove(op) {
                 if (op===0) { op="move"; } else if (op===1) { op="copy"; }
@@ -568,16 +592,14 @@
                     alert('please select one');
                     return;
                 }
-                var from_drive = root[0];
-                var from_dir = location.pathname.slice(6);
                 var data = JSON.stringify({
                     "op": op,
                     "dirlist": dirlist,
                     "filelist": filelist,
-                    "from_drive": from_drive,
-                    "from_dir": from_dir,
-                    "to_drive": cur_drive,
-                    "to_dir": cur_path
+                    "from_drive": root,
+                    "from_dir": cur_path,
+                    "to_drive": sel_drive,
+                    "to_dir": sel_path
                 });
                 sendJSON("/api/operate", data);
             }
@@ -604,14 +626,16 @@
                     return;
                 }
                 var data = JSON.stringify({
-                    "op": "new",
-                    "foldername": name,
-                    "to_drive": cur_drive,
-                    "to_dir": cur_path,
+                    "op": "newfolder",
+                    "name": name,
+                    "to_drive": sel_drive,
+                    "to_dir": sel_path,
                     "redirect": "no"
                 });
-                sendJSON("/api/operate", data);
-                getList(cur_path, cur_drive);
+                xhr = sendJSON("/api/operate", data);
+                xhr.onload = function() {
+                    getList(sel_path, sel_drive);
+                }
             }
             function newFolder(folder) {
                 var op;
@@ -625,13 +649,11 @@
                     alert('no input')
                     return;
                 }
-                var drive = root[0];
-                var path = location.pathname.slice(6);
                 var data = JSON.stringify({
                     "op": op,
                     "name": name,
-                    "to_drive": drive,
-                    "to_dir": path,
+                    "to_drive": root,
+                    "to_dir": cur_path,
                     "redirect": "page"
                 });
                 sendJSON("/api/operate", data);
@@ -666,14 +688,12 @@
                     alert('no input')
                     return;
                 }
-                var drive = root[0];
-                var path = location.pathname.slice(6);
                 var data = JSON.stringify({
                     "op": "rename",
                     "oldname": oldname,
                     "newname": name,
-                    "to_drive": drive,
-                    "to_dir": path
+                    "to_drive": root,
+                    "to_dir": cur_path
                 });
                 sendJSON("/api/operate", data);
             }
@@ -684,20 +704,18 @@
                     alert('please select one');
                     return;
                 }
-                var drive = root[0];
-                var path = location.pathname.slice(6);
                 var data = JSON.stringify({
                     "op": "delete",
                     "deldir": dirlist,
                     "delfile": filelist,
-                    "to_drive": drive,
-                    "to_dir": path
+                    "to_drive": root,
+                    "to_dir": cur_path
                 });
                 sendJSON("/api/operate", data);
             }
             function changeDrive(obj) {
-                name = obj.innerText[0];
-                if (name===root[0]) {
+                name = obj.innerText + '/';
+                if (name===root) {
                     location.href = '/';
                     return
                 }
@@ -721,33 +739,27 @@
                     ext = filelist[0].split('.').slice(-1)[0];
                 }
                 if (dirlist.length===1 && filelist.length===0) {
-                    var drive = root[0];
-                    var path = location.pathname.slice(6);
                     var data = JSON.stringify({
                         "op": "archive",
                         "dirname": dirlist[0],
-                        "to_drive": drive,
-                        "to_dir": path
+                        "to_drive": root,
+                        "to_dir": cur_path
                     });
                     sendJSON("/api/operate", data);
                 } else if (dirlist.length===0 && filelist.length===1 && ext==="zip") {
-                    var drive = root[0];
-                    var path = location.pathname.slice(6);
                     var data = JSON.stringify({
                         "op": "unzip",
                         "zipfile": filelist[0],
-                        "to_drive": drive,
-                        "to_dir": path
+                        "to_drive": root,
+                        "to_dir": cur_path
                     });
                     sendJSON("/api/operate", data);
                 } else if (dirlist.length===0 && filelist.length!=0) {
-                    var drive = root[0];
-                    var path = location.pathname.slice(6);
                     var data = JSON.stringify({
                         "op": "zip",
                         "filelist": filelist,
-                        "to_drive": drive,
-                        "to_dir": path
+                        "to_drive": root,
+                        "to_dir": cur_path
                     });
                     sendJSON("/api/operate", data);
                 } else {
@@ -775,6 +787,9 @@
                     } else {
                         document.getElementById("zipfile").innerHTML = "Zip";
                     }
+                    var selnum = dirlist.length + filelist.length;
+                    document.getElementById("selnum").innerHTML = selnum + " Selected"
+
                 });
             });
             var filepath;
@@ -793,14 +808,12 @@
                 if (!['.txt', '.md', '.py', '.html', '.css', '.js'].includes(ext)) {
                     confirm('Is it a real text file? click OK to open')
                 }
-                var drive = root[0];
-                var path = location.pathname.slice(6);
-                filepath = drive + ':' + path + '/' + name;
+                filepath = root + cur_path + '/' + name;
                 var data = JSON.stringify({
                     "op": "open",
                     "name": name,
-                    "to_drive": drive,
-                    "to_dir": path
+                    "to_drive": root,
+                    "to_dir": cur_path
                 });
                 const xhr = new XMLHttpRequest();
                 xhr.open("POST", "/api/openfile", true);
@@ -825,7 +838,7 @@
                 xhr.open("POST", "/api/openfile", true);
                 xhr.setRequestHeader("Content-Type", "application/json");
                 xhr.onload = function() {
-                    console.log(xhr.responseText);
+                    alert('file saved');
                 }
                 xhr.send(data);
             }
@@ -867,17 +880,14 @@
                         x[i].style.display = "none";
                     }
                 }
-                var dirlist = getChecked(1);
-                var filelist = getChecked(0);
-                if (filelist.length!=0) {
-                    ext = filelist[0].split('.').slice(-1);
-                }
-                if (dirlist.length===0 && filelist.length===1 && ext==="zip") {
-                    document.getElementById('zipfile').innerHTML = 'Unzip';                    
-                }
             }
             const selAll = document.getElementById("selectall");
-            selAll.addEventListener('click', function() {
+            if (selAll!=null) {
+                selAll.addEventListener('click', function() {
+                    selectAll();                
+                });
+            }
+            function selectAll() {
                 const sel = document.querySelectorAll(".select input");
                 for(var i=1; i<sel.length; i++) {
                     if (sel[i].checked===false) {
@@ -886,7 +896,7 @@
                         sel[i].checked=false;
                     }
                 }
-            });
+            }
             function getChecked(dir) {
                 var dirname = document.querySelectorAll('input[class="dirname form-check-input"]:checked'), seldir = [];
                 Array.prototype.forEach.call(dirname, function(e) {
@@ -1064,8 +1074,6 @@
                 const xhr = new XMLHttpRequest();
                 const formData = new FormData();
                 formData.append("file", file);
-                dest = root + location.pathname.slice(6);
-                formData.append("dest", dest);
     
                 xhr.upload.addEventListener("progress", function(e) {
                     const fileProgress = document.querySelector(`#file-item-${uniqueId} .file-progress`);
