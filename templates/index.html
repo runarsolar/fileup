@@ -490,7 +490,7 @@
       </div>
         <script>
             var root = '{{ g.drive }}';
-            var cur_path = '{{ g.cur_path }}'
+            var cur_path = '{{ g.cur_path }}';
             function sendJSON(url, data) {
                 var xhr = new XMLHttpRequest();
                 var url = url;
@@ -1074,6 +1074,7 @@
                 const xhr = new XMLHttpRequest();
                 const formData = new FormData();
                 formData.append("file", file);
+                formData.append("dest", root + cur_path);
     
                 xhr.upload.addEventListener("progress", function(e) {
                     const fileProgress = document.querySelector(`#file-item-${uniqueId} .file-progress`);

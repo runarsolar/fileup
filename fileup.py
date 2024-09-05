@@ -11,11 +11,8 @@ from multiprocessing import Pool, freeze_support
 app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
-root = 'D:/'
-cur_path = ""
 use_auth = False
 reg = True
-gridview = False
 if not os.path.exists('uploads'):
     os.mkdir('uploads')
 if not os.path.exists('uploads/cache'):
@@ -49,19 +46,29 @@ def files(url=''):
     if use_auth is True and g.user is None:
         return redirect('/')
     
-    global root, cur_path
-    g.gridview = gridview
-    g.drive = root
+    gridview = session.get('gridview')
+    if gridview == None:
+        g.gridview = False
+        session['gridview'] = False
+    else:
+        g.gridview = gridview
+
+    drive = session.get('drive')
+    if drive == None:
+        g.drive = 'D:/'
+        session['drive'] = 'D:/'
+    else:
+        g.drive = drive
+
     drives = [ chr(x) + ":/" for x in range(65,91) if os.path.exists(chr(x) + ":/") ]
     if drives == []:
-        root = '/'
+        g.drive = '/'
+        session['drive'] = '/'
 
-    path = os.path.join(root, unquote(url))
-    cur_path = unquote(url)
-    g.cur_path = cur_path
+    path = os.path.join(g.drive, unquote(url))
+    g.cur_path = unquote(url)
     if not os.path.exists(path):
         return redirect('/')
-        
     if url == '':
         cur_dir = '/files'
     else:
@@ -103,14 +110,10 @@ def show_file(dir):
 
 @app.route('/api/drives', methods=('POST',))
 def get_drives():
-    drive = root
     drives = [ chr(x) + ":/" for x in range(65,91) if os.path.exists(chr(x) + ":/") ]
     res = {
-        "nowdrive": drive,
-        "nowpath": cur_path,
         "alldrives": drives,
         "use_auth": use_auth,
-        "gridview": gridview,
         "allowreg": reg
         }
     return json.dumps(res)
@@ -232,12 +235,10 @@ def operate():
                 shutil.copy(from_path + file, to_path)
     
     if req['op'] == 'changeDrive':
-        global root
-        root = req['drivename']
+        session['drive'] = req['drivename']
 
     if req['op'] == 'changeView':
-        global gridview
-        gridview = not gridview
+        session['gridview'] = not session['gridview']
 
     # zip a single folder
     if req['op'] == 'archive':
@@ -268,11 +269,11 @@ def operate():
 @app.route('/api/upload', methods=('POST',))
 def upload():
     file = request.files['file']
+    dest = os.path.join(request.form['dest'], file.filename)
 
     fileup = 'uploads/' + file.filename
     file.save(fileup)
-    filedest = os.path.join(root, cur_path + '/', file.filename)
-    shutil.move(fileup, filedest)
+    shutil.move(fileup, dest)
     return 'ok'
 
 @app.route('/api/openfile', methods=('POST',))
@@ -365,8 +366,12 @@ def parallel_thumb(lists):
 
 def thumbnail(params):
     pic_path, name = params
-    im = Image.open(pic_path)
-    im.thumbnail((256, 256))
+    try:
+        im = Image.open(pic_path)
+        im.thumbnail((256, 256))
+    except:
+        im = Image.new('RGB', (256,256))
+        im.save("uploads/cache/%s" % name)
     try:
         im.save("uploads/cache/%s" % name)
     except:
