@@ -3,7 +3,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import os, shutil, hashlib, argparse, json, sqlite3
 from urllib.parse import quote, unquote
 from PIL import Image
-from multiprocessing import Pool, freeze_support
 
 #flask --app fileup --debug run -h 0.0.0.0
 #pyinstaller -F --add-data templates:templates --add-data static:static fileup.py
@@ -11,6 +10,7 @@ from multiprocessing import Pool, freeze_support
 app = Flask(__name__)
 app.secret_key = 'dev'
 app.config['UPLOAD_FOLDER'] = 'uploads'
+root = 'D:/'
 use_auth = False
 reg = True
 if not os.path.exists('uploads'):
@@ -55,8 +55,8 @@ def files(url=''):
 
     drive = session.get('drive')
     if drive == None:
-        g.drive = 'D:/'
-        session['drive'] = 'D:/'
+        g.drive = root
+        session['drive'] = root
     else:
         g.drive = drive
 
@@ -66,7 +66,6 @@ def files(url=''):
         session['drive'] = '/'
 
     path = os.path.join(g.drive, unquote(url))
-    g.cur_path = unquote(url)
     if not os.path.exists(path):
         return redirect('/')
     if url == '':
@@ -76,11 +75,14 @@ def files(url=''):
     
     if os.path.isdir(path):
         lists = show_file(path)
+        # Important! or will be file path
+        g.cur_path = unquote(url)
+        session['cur_path'] = unquote(url)
     else:
         return send_file(path)
     
     if g.gridview:
-        parallel_thumb(lists)
+        generate_thumb(lists)
     
     return render_template('index.html', lists=lists, cur_dir=cur_dir, drives=drives)
 
@@ -113,6 +115,9 @@ def get_drives():
     drives = [ chr(x) + ":/" for x in range(65,91) if os.path.exists(chr(x) + ":/") ]
     res = {
         "alldrives": drives,
+        "nowdrive": session['drive'],
+        "nowpath": session['cur_path'],
+        "gridview": session['gridview'],
         "use_auth": use_auth,
         "allowreg": reg
         }
@@ -269,7 +274,7 @@ def operate():
 @app.route('/api/upload', methods=('POST',))
 def upload():
     file = request.files['file']
-    dest = os.path.join(request.form['dest'], file.filename)
+    dest = os.path.join(session['drive'], session['cur_path']+'/', file.filename)
 
     fileup = 'uploads/' + file.filename
     file.save(fileup)
@@ -336,47 +341,32 @@ def user_auth():
 
 @app.route('/cache/<filename>')
 def show_thumb(filename):
+    if not os.path.exists(os.getcwd() + "/uploads/cache/" + filename):
+        src_path = session['drive'] + session['cur_path'] + '/' + filename[:-11]
+        try:
+            im = Image.open(src_path)
+            im.thumbnail((256, 256))
+            rgb_im = im.convert('RGB')
+            rgb_im.save("uploads/cache/%s" % filename)
+        except:
+            pass
+
     path = os.getcwd() + '/uploads/cache/'
     return send_file(path + filename)
 
-def parallel_thumb(lists):
-    piclist = []
-    picname = []
+def generate_thumb(lists):
     for file in lists[1]:
         if file['type'] in ['.jpg', '.jpeg', '.png', '.bmp', '.webp']:
             file['ispic'] = True
             pic_path = file['path']
             m = hashlib.sha256()
             m.update(pic_path.encode())
-            tname = "t-" + file['name'] + "-" + m.hexdigest()[:6] + ".jpg"
-            if not os.path.exists(os.getcwd() + "/uploads/cache/" + tname):
-                piclist.append(pic_path)
-                picname.append(tname)
-                file['t'] = "/cache/" + tname
-            else:
-                file['t'] = "/cache/" + tname
+            tname = file['name'] + "-" + m.hexdigest()[:6] + ".jpg"
+            file['t'] = "/cache/" + tname
         elif file['type'] == '.gif':
             file['ispic'] = True
         else:
             file['ispic'] = False
-
-    pool = Pool(8)
-    pool.map(thumbnail, zip(piclist, picname))
-    return
-
-def thumbnail(params):
-    pic_path, name = params
-    try:
-        im = Image.open(pic_path)
-        im.thumbnail((256, 256))
-    except:
-        im = Image.new('RGB', (256,256))
-        im.save("uploads/cache/%s" % name)
-    try:
-        im.save("uploads/cache/%s" % name)
-    except:
-        rgb_im = im.convert('RGB')
-        rgb_im.save("uploads/cache/%s" % name)
 
 def sizedisp(num):
     for unit in ("", "k", "M"):
@@ -396,7 +386,6 @@ def create_db():
     db.close()
 
 if __name__ == '__main__':
-    freeze_support()
     parser = argparse.ArgumentParser(description="down and up files")
     parser.add_argument('-p', "--port", help="change default port")
     parser.add_argument('-r', "--root", help="change start directory like C:/")

@@ -489,8 +489,22 @@
 
       </div>
         <script>
-            var root = '{{ g.drive }}';
-            var cur_path = '{{ g.cur_path }}';
+            var root;
+            var cur_path;
+            var sel_drive;
+            var sel_path;
+            var initreq = new XMLHttpRequest();
+            initreq.open("POST", "/api/drives");
+            initreq.onload = function() {
+                res = initreq.responseText;
+                info = JSON.parse(res);
+                root = info.nowdrive;
+                cur_path = info.nowpath;
+                sel_drive = root;
+                sel_path = cur_path;
+            }
+            initreq.send();
+
             function sendJSON(url, data) {
                 var xhr = new XMLHttpRequest();
                 var url = url;
@@ -507,8 +521,6 @@
                 xhr.send(data);
                 return xhr;
             }
-            var sel_drive = root;
-            var sel_path = cur_path;
             function selectDrive(obj) {
                 document.querySelector("#move .curdrive .active").classList.remove("active");
                 obj.classList.add("active");
@@ -1074,7 +1086,6 @@
                 const xhr = new XMLHttpRequest();
                 const formData = new FormData();
                 formData.append("file", file);
-                formData.append("dest", root + cur_path);
     
                 xhr.upload.addEventListener("progress", function(e) {
                     const fileProgress = document.querySelector(`#file-item-${uniqueId} .file-progress`);
